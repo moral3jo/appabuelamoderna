@@ -284,22 +284,31 @@
 
     // ================================================================
     //  MÚSICA DE FONDO
-    //  sounds/relax.mp3   → calentamiento, cierre, estiramiento, descanso
-    //  sounds/animado.mp3 → central
+    //  Una canción por ejercicio, asignada al inicio de forma
+    //  determinista (misma sesión = mismo orden).
+    //  Sigue sonando durante el descanso; solo cambia al arrancar
+    //  el siguiente ejercicio.
     //  Arranca en posición aleatoria para que nunca suene igual.
-    //  Fade suave al cambiar de pista.
     // ================================================================
 
-    // Qué archivo corresponde a cada tipo de bloque
-    function archivoMusica(tipoBloque) {
-      return (tipoBloque || '').toLowerCase() === 'central'
-        ? 'sounds/animado.mp3'
-        : 'sounds/relax.mp3';
+    let musicaActual  = null;
+    let fadeIntervalo = null;
+
+    // Baraja la lista de canciones con semilla del día y asigna una por ejercicio
+    function asignarCanciones() {
+      const lista = [...(CONFIG.CANCIONES || [])];
+      if (!lista.length) return ejercicios.map(() => null);
+
+      // Fisher-Yates determinista con semilla del día
+      const seed = dayOfYear();
+      for (let i = lista.length - 1; i > 0; i--) {
+        const j = (seed * 1234 + i * 567) % (i + 1);
+        [lista[i], lista[j]] = [lista[j], lista[i]];
+      }
+      return ejercicios.map((_, i) => lista[i % lista.length]);
     }
 
-    let musicaActual     = null;   // objeto Audio en reproducción
-    let archivoActual    = null;   // ruta del archivo que suena ahora
-    let fadeIntervalo    = null;   // intervalo del fade en curso
+    const cancionesPorEjercicio = asignarCanciones();
 
     function cancelarFade() {
       if (fadeIntervalo) { clearInterval(fadeIntervalo); fadeIntervalo = null; }
@@ -307,13 +316,11 @@
 
     function fadeVolumen(audio, destino, durMs, alTerminar) {
       cancelarFade();
-      const paso      = 50;
-      const pasos     = durMs / paso;
-      const delta     = (destino - audio.volume) / pasos;
+      const paso  = 50;
+      const delta = (destino - audio.volume) / (durMs / paso);
       fadeIntervalo = setInterval(() => {
         audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
-        if ((delta > 0 && audio.volume >= destino) ||
-            (delta < 0 && audio.volume <= destino)) {
+        if ((delta > 0 && audio.volume >= destino) || (delta < 0 && audio.volume <= destino)) {
           audio.volume = destino;
           cancelarFade();
           if (alTerminar) alTerminar();
@@ -321,40 +328,28 @@
       }, paso);
     }
 
-    function iniciarMusica(tipoBloque) {
-      const archivo = archivoMusica(tipoBloque);
-      if (archivo === archivoActual && musicaActual && !musicaActual.paused) return;
+    function iniciarCancion(idx) {
+      const nombre = cancionesPorEjercicio[idx];
+      if (!nombre) return;
+      const ruta = 'sound/' + encodeURIComponent(nombre);
 
-      // Fade out y reemplazar
       const viejo = musicaActual;
-      if (viejo) {
-        fadeVolumen(viejo, 0, 1500, () => { viejo.pause(); viejo.src = ''; });
-      }
+      if (viejo) fadeVolumen(viejo, 0, 1200, () => { viejo.pause(); viejo.src = ''; });
 
-      const nuevo    = new Audio(archivo);
-      nuevo.loop     = true;
-      nuevo.volume   = 0;
-      musicaActual   = nuevo;
-      archivoActual  = archivo;
+      const nuevo   = new Audio(ruta);
+      nuevo.loop    = true;
+      nuevo.volume  = 0;
+      musicaActual  = nuevo;
 
-      // Inicio aleatorio: esperamos la duración y arrancamos en punto random
       nuevo.addEventListener('loadedmetadata', () => {
-        // Deja al menos 2 min al final para que loop no sea inmediato
         const margen = Math.min(120, nuevo.duration * 0.1);
-        const max    = Math.max(0, nuevo.duration - margen);
-        nuevo.currentTime = Math.random() * max;
+        nuevo.currentTime = Math.random() * Math.max(0, nuevo.duration - margen);
         nuevo.play().catch(() => {});
-        fadeVolumen(nuevo, 0.55, 2000);
-        mostrarIndicadorMusica(tipoBloque);
+        fadeVolumen(nuevo, 0.6, 2000);
+        mostrarIndicadorMusica(nombre);
       }, { once: true });
 
-      nuevo.addEventListener('error', () => {
-        // El archivo no existe: silencio total, sin error visible
-        archivoActual = null;
-        musicaActual  = null;
-      }, { once: true });
-
-      // Intentar cargar (el play real lo da loadedmetadata)
+      nuevo.addEventListener('error', () => { musicaActual = null; }, { once: true });
       nuevo.load();
     }
 
@@ -363,28 +358,22 @@
     }
 
     function reanudarMusica() {
-      if (musicaActual && musicaActual.paused && archivoActual) {
-        musicaActual.play().catch(() => {});
-      }
+      if (musicaActual && musicaActual.paused) musicaActual.play().catch(() => {});
     }
 
     function detenerMusica() {
       cancelarFade();
       if (musicaActual) {
-        fadeVolumen(musicaActual, 0, 1200, () => {
-          musicaActual.pause();
-          musicaActual = null;
-          archivoActual = null;
-        });
+        fadeVolumen(musicaActual, 0, 1000, () => { musicaActual.pause(); musicaActual = null; });
       }
     }
 
-    function mostrarIndicadorMusica(tipoBloque) {
-      const el   = document.getElementById('music-indicator');
-      const tipo = (tipoBloque || '').toLowerCase();
-      el.textContent = tipo === 'central' ? '🎵 Música animada' : '🎵 Música relajante';
+    function mostrarIndicadorMusica(nombre) {
+      const el = document.getElementById('music-indicator');
+      // Quitar extensión y ruta para mostrar solo el título
+      el.textContent = '🎵 ' + nombre.replace(/\.mp3$/i, '');
       el.style.opacity = '1';
-      setTimeout(() => { el.style.opacity = '0'; }, 3000);
+      setTimeout(() => { el.style.opacity = '0'; }, 3500);
     }
 
     // ================================================================
@@ -452,19 +441,17 @@
       actualizarDescanso();
       sonidoInicioDescanso();
       mostrarBanner('💧 ¡Descansa un momento!', 'descanso');
-      // Música: durante descanso suena relax (fade suave si venía de central)
-      iniciarMusica('descanso');
+      // La música sigue sonando sin cambios durante el descanso
     }
 
     function empezarEjercicio() {
       modo          = 'ejercicio';
       segsRestantes = parseInt(ejercicios[idxActual].segundos) || 60;
-      const tipo    = ejercicios[idxActual]._tipo || '';
       pintarModo();
       actualizarEjercicio();
       sonidoInicioEjercicio();
       mostrarBanner(`🌟 Ejercicio ${idxActual + 1}: ${ejercicios[idxActual].nombre}`, 'ejercicio');
-      iniciarMusica(tipo);
+      iniciarCancion(idxActual);   // nueva canción al empezar cada ejercicio
     }
 
     function saltarDescanso() {
@@ -536,7 +523,7 @@
       actualizarEjercicio();
       actualizarTimer();
       pintarModo();
-      iniciarMusica(ejercicios[0]?._tipo || '');
+      iniciarCancion(0);
       intervalo = setInterval(tick, 1000);
     }
 

@@ -34,6 +34,18 @@ const CONFIG = {
   // 6. Segundos de descanso entre ejercicios
   DESCANSO_SEGUNDOS: 20,
 
+  // 7. Canciones de fondo (una por ejercicio, en orden aleatorio cada día)
+  //    Pon aquí los nombres de archivo exactos de la carpeta sound/
+  CANCIONES: [
+    "Alegría - Cirque du Soleil - Instrumental.mp3",
+    "Coldplay - A Sky Full of Stars (Instrumental).mp3",
+    "entre2aguas.mp3",
+    "Enya - Orinoco Flow (Instrumental).mp3",
+    "Here Comes The Sun (Instrumental).mp3",
+    "Michael Buble    Feeling Good Instrumental Original Official.mp3",
+    "Vangelis - Chariots Of Fire.mp3",
+  ],
+
   // 7. Modo desarrollador: tiempos muy cortos para probar el flujo rápido
   //    false = normal  |  true = ejercicios 10 seg, descansos 2 seg
   DEV_MODE: true,
