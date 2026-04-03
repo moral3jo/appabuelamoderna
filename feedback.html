@@ -15,11 +15,15 @@
       margin: 20px 0;
     }
     .estrella {
-      font-size: 3.2rem;
+      font-size: 3.8rem;
       cursor: pointer;
-      transition: transform 0.12s;
+      transition: transform 0.12s, color 0.12s;
       user-select: none;
       line-height: 1;
+      color: #ccc;        /* gris por defecto */
+    }
+    .estrella.marcada {
+      color: #f5c84a;     /* dorado cuando está seleccionada */
     }
     .estrella:active { transform: scale(1.25); }
 
@@ -51,11 +55,11 @@
 
   <!-- Estrellas -->
   <div class="estrellas" id="estrellas" role="group" aria-label="Valoración">
-    <span class="estrella" onclick="puntuar(1)" aria-label="1 estrella">⭐</span>
-    <span class="estrella" onclick="puntuar(2)" aria-label="2 estrellas">⭐</span>
-    <span class="estrella" onclick="puntuar(3)" aria-label="3 estrellas">⭐</span>
-    <span class="estrella" onclick="puntuar(4)" aria-label="4 estrellas">⭐</span>
-    <span class="estrella" onclick="puntuar(5)" aria-label="5 estrellas">⭐</span>
+    <span class="estrella" onclick="puntuar(1)" aria-label="1 estrella">★</span>
+    <span class="estrella" onclick="puntuar(2)" aria-label="2 estrellas">★</span>
+    <span class="estrella" onclick="puntuar(3)" aria-label="3 estrellas">★</span>
+    <span class="estrella" onclick="puntuar(4)" aria-label="4 estrellas">★</span>
+    <span class="estrella" onclick="puntuar(5)" aria-label="5 estrellas">★</span>
   </div>
 
   <!-- Comentario opcional -->
@@ -74,8 +78,7 @@
     function puntuar(n) {
       nota = n;
       document.querySelectorAll('.estrella').forEach((el, i) => {
-        el.textContent = i < n ? '🌟' : '⭐';
-        el.style.transform = i < n ? 'scale(1.1)' : '';
+        el.classList.toggle('marcada', i < n);
       });
     }
 
@@ -94,7 +97,7 @@
         form.append(CONFIG.FORM_ENTRY_COMENTARIO, comentario);
 
         await fetch(
-          `https://docs.google.com/forms/d/${CONFIG.FORM_ID}/formResponse`,
+          `https://docs.google.com/forms/d/e/${CONFIG.FORM_ID}/formResponse`,
           { method: 'POST', body: form, mode: 'no-cors' }
         );
       } catch {
