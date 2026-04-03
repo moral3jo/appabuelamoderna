@@ -197,9 +197,16 @@
     const ejercicios = cargarEjercicios();
     if (ejercicios.length === 0) window.location.href = 'index.html';
 
-    const DESCANSO   = CONFIG.DESCANSO_SEGUNDOS || 60;
+    // DEV_MODE: tiempos muy cortos para probar el flujo
+    const DEV        = CONFIG.DEV_MODE === true;
+    if (DEV) ejercicios.forEach(e => { e.segundos = '10'; });
+
+    const DESCANSO   = DEV ? 2 : (CONFIG.DESCANSO_SEGUNDOS || 20);
     const TOTAL_EJ   = ejercicios.reduce((s, e) => s + (parseInt(e.segundos) || 60), 0);
     const TOTAL_SEGS = TOTAL_EJ + DESCANSO * (ejercicios.length - 1);
+
+    // Cuántos segundos antes del fin del ejercicio mostrar el "siguiente"
+    const AVISO_SIGUIENTE = DEV ? 4 : 10;
 
     // Estado
     let modo          = 'ejercicio';
@@ -353,13 +360,25 @@
     //  UI
     // ================================================================
 
-    function pintarModo() {
-      const esDescanso = (modo === 'descanso');
+    function pintarModo(mostrarSiguiente = false) {
+      const esDescanso  = (modo === 'descanso');
+      const verSiguiente = esDescanso || mostrarSiguiente;
       document.getElementById('timer').className    = `timer ${modo}`;
       document.getElementById('barra').className    = `barra-fill ${modo}`;
       document.getElementById('media-wrap').className     = esDescanso ? 'descanso' : '';
-      document.getElementById('siguiente-card').className = esDescanso ? 'visible' : '';
+      document.getElementById('siguiente-card').className = verSiguiente ? 'visible' : '';
       document.getElementById('btn-saltar').className     = esDescanso ? 'btn-ctrl visible' : 'btn-ctrl';
+    }
+
+    function actualizarSiguienteCard() {
+      // Rellena la card del siguiente ejercicio (usada tanto en descanso como en aviso final)
+      const siguiente = ejercicios[idxActual + 1];
+      if (!siguiente) return;
+      document.getElementById('siguiente-nombre').textContent = siguiente.nombre || '';
+      insertarMedia(
+        document.getElementById('siguiente-thumb'),
+        siguiente.animacion, siguiente.emoji || '🏃', 'media-img'
+      );
     }
 
     function actualizarEjercicio() {
@@ -372,17 +391,10 @@
     }
 
     function actualizarDescanso() {
-      const siguiente = ejercicios[idxActual + 1];
       document.getElementById('ej-nombre').textContent = '¡Descansa!';
       document.getElementById('ej-desc').textContent   = 'Respira, bebe agua si necesitas.';
       document.getElementById('media-wrap').textContent = '💧';
-      if (siguiente) {
-        document.getElementById('siguiente-nombre').textContent = siguiente.nombre || '';
-        insertarMedia(
-          document.getElementById('siguiente-thumb'),
-          siguiente.animacion, siguiente.emoji || '🏃', 'media-img'
-        );
-      }
+      actualizarSiguienteCard();
     }
 
     function actualizarTimer() {
@@ -440,6 +452,15 @@
       segsRestantes--;
       segsTransc++;
       actualizarTimer();
+
+      // Mostrar el siguiente ejercicio cuando quedan ≤ AVISO_SIGUIENTE segundos
+      if (modo === 'ejercicio') {
+        const haysiguiente = idxActual + 1 < ejercicios.length;
+        if (haysiguiente && segsRestantes <= AVISO_SIGUIENTE && segsRestantes > 0) {
+          actualizarSiguienteCard();
+          pintarModo(true);   // mostrarSiguiente = true
+        }
+      }
 
       if (segsRestantes > 0) return;
 

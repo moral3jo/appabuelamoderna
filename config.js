@@ -31,7 +31,11 @@ const CONFIG = {
     { tipo: "estiramiento",  cantidad: 1 },
   ],
 
-  // 6. Segundos de descanso entre ejercicios (60 = 1 minuto)
-  DESCANSO_SEGUNDOS: 60,
+  // 6. Segundos de descanso entre ejercicios
+  DESCANSO_SEGUNDOS: 20,
+
+  // 7. Modo desarrollador: tiempos muy cortos para probar el flujo rápido
+  //    false = normal  |  true = ejercicios 10 seg, descansos 2 seg
+  DEV_MODE: false,
 
 };

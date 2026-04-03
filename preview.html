@@ -141,24 +141,10 @@
     function renderLista(ejercicios) {
       const lista = document.getElementById('lista');
       lista.innerHTML = '';
-      let tipoActual  = null;
 
       ejercicios.forEach((ej, i) => {
         const tipo = ej._tipo || '';
         const meta = metaBloque(tipo);
-
-        // Cabecera de bloque cuando cambia el tipo
-        if (tipo !== tipoActual) {
-          tipoActual = tipo;
-          const header = document.createElement('div');
-          header.className = 'bloque-header';
-          header.innerHTML = `
-            <div class="bloque-header-linea"></div>
-            <span class="bloque-header-texto ${meta.clase}">${meta.emoji} ${meta.label}</span>
-            <div class="bloque-header-linea"></div>
-          `;
-          lista.appendChild(header);
-        }
 
         // Fila del ejercicio
         const fila = document.createElement('div');
