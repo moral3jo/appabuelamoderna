@@ -8,50 +8,36 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <style>
-    #consejo-card { text-align: left; }
-    #consejo-titulo { text-align: left; margin-bottom: 10px; }
-    #consejo-desc   { text-align: left; }
-    .ya-hecho {
-      background: var(--verde-bg);
-      border-radius: var(--radio);
-      padding: 20px;
-      width: 100%;
-      text-align: center;
-      margin-top: 14px;
-      border: 2px solid var(--verde-claro);
+    body {
+      height: 100dvh;
+      overflow: hidden;
+      justify-content: center;
+      padding: 20px 20px 28px;
     }
-    .ya-hecho p { color: var(--verde); font-size: 1.05rem; }
+    #consejo-card { text-align: left; }
+    #consejo-titulo { text-align: left; margin-bottom: 8px; }
+    #consejo-desc   { text-align: left; }
+    #racha {
+      font-size: 1rem;
+      color: var(--verde);
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
   </style>
 </head>
 <body>
 
-  <!-- Saludo -->
-  <h1 id="saludo" style="margin-top: 8px;">Buenos días 🌿</h1>
+  <h1 id="saludo">Buenos días 🌸</h1>
 
-  <!-- Ilustración portada -->
-  <svg class="ilustracion" viewBox="0 0 280 220" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="140" cy="105" r="95" fill="#e8f5e9"/>
-    <!-- flores decorativas -->
-    <text x="140" y="105" text-anchor="middle" dominant-baseline="middle" font-size="80">🌻</text>
-    <text x="52"  y="165" text-anchor="middle" font-size="38">🌿</text>
-    <text x="228" y="160" text-anchor="middle" font-size="38">🌸</text>
-    <text x="95"  y="48"  text-anchor="middle" font-size="28">✨</text>
-    <text x="200" y="52"  text-anchor="middle" font-size="22">🌱</text>
-  </svg>
-
-  <!-- Consejo del día -->
-  <div class="tarjeta" id="consejo-card">
+  <div class="tarjeta" id="consejo-card" style="margin-top: 16px;">
     <span class="etiqueta-verde">💚 Consejo del día</span>
     <h2 id="consejo-titulo">Cargando...</h2>
     <p id="consejo-desc" style="text-align:left; margin-top:8px;"></p>
   </div>
 
-  <!-- Banner si ya hizo los ejercicios hoy -->
-  <div class="ya-hecho" id="ya-hecho" style="display:none;">
-    <p>¡Hoy ya has hecho tus ejercicios! 🌟<br>¡Qué orgullosa estoy de ti!</p>
-  </div>
+  <div id="racha"></div>
 
-  <!-- Botón principal -->
   <button class="btn" id="btn-ejercicios" onclick="irAPreview()">
     Ver mis ejercicios de hoy →
   </button>
@@ -60,7 +46,6 @@
   <script src="app.js"></script>
   <script>
     async function init() {
-      // Saludo según hora del día
       const hora = new Date().getHours();
       let saludo;
       if      (hora < 12) saludo = `¡Buenos días, ${CONFIG.NOMBRE}! 🌸`;
@@ -68,7 +53,6 @@
       else                saludo = `¡Buenas noches, ${CONFIG.NOMBRE}! 🌙`;
       document.getElementById('saludo').textContent = saludo;
 
-      // Consejo del día
       try {
         const c = await getConsejoDelDia();
         document.getElementById('consejo-titulo').textContent = c.titulo      || '';
@@ -80,10 +64,16 @@
           'Una rodaja en agua caliente con limón, una delicia.';
       }
 
-      // ¿Ya hizo la sesión hoy?
+      const racha = getRacha();
       if (sesionCompletadaHoy()) {
-        document.getElementById('ya-hecho').style.display      = 'block';
-        document.getElementById('btn-ejercicios').textContent  = 'Repetir ejercicios 💪';
+        document.getElementById('btn-ejercicios').textContent = 'Repetir ejercicios 💪';
+        if (racha >= 2) {
+          document.getElementById('racha').textContent = `🔥 ¡Llevas ${racha} días seguidos!`;
+        } else {
+          document.getElementById('racha').textContent = `✅ ¡Hoy ya lo has hecho!`;
+        }
+      } else if (racha >= 2) {
+        document.getElementById('racha').textContent = `🔥 ¡Llevas ${racha} días seguidos! ¡A por el ${racha + 1}!`;
       }
     }
 

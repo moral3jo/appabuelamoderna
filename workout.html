@@ -8,7 +8,12 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <style>
-    body { justify-content: flex-start; }
+    body {
+      justify-content: flex-start;
+      height: 100dvh;
+      overflow: hidden;
+      padding: 6px 16px 12px;
+    }
 
     /* --- Overlay de inicio --- */
     #overlay {
@@ -16,55 +21,80 @@
       background: var(--crema);
       display: flex; flex-direction: column;
       align-items: center; justify-content: center;
-      z-index: 100; padding: 32px; text-align: center;
+      z-index: 100; padding: 24px 20px; text-align: center;
+      gap: 12px;
     }
-    #overlay h1 { font-size: 2.2rem; margin-bottom: 20px; }
-    #overlay p  { font-size: 1.15rem; margin-bottom: 32px; }
-    #overlay .btn { max-width: 340px; }
+    #overlay h1 { font-size: 2rem; }
+    #overlay .btn { max-width: 340px; margin-top: 4px; }
+
+    /* Card del primer ejercicio dentro del overlay */
+    #overlay-ejercicio {
+      background: white; border-radius: var(--radio);
+      padding: 14px 16px; width: 100%; max-width: 380px;
+      box-shadow: var(--sombra);
+      display: flex; align-items: center; gap: 14px; text-align: left;
+    }
+    #overlay-ejercicio-thumb {
+      min-width: 60px; width: 60px; height: 60px;
+      border-radius: 12px; background: var(--verde-bg);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.2rem; overflow: hidden; flex-shrink: 0;
+    }
+    #overlay-ejercicio-thumb .media-img {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
+    }
+    .overlay-label {
+      font-size: 0.75rem; color: var(--verde); font-weight: bold;
+      text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 3px;
+    }
+    #overlay-ejercicio-nombre { font-size: 1rem; font-weight: bold; color: var(--text); }
 
     /* --- Timer --- */
-    .timer-wrap { width: 100%; text-align: center; margin: 8px 0 2px; }
+    .timer-wrap { width: 100%; text-align: center; margin: 4px 0 2px; }
     .timer {
-      font-size: 3rem; font-weight: bold;
+      font-size: 2.6rem; font-weight: bold;
       font-variant-numeric: tabular-nums; line-height: 1;
       transition: color 0.4s;
     }
     .timer.ejercicio { color: var(--verde); }
     .timer.descanso  { color: #5b8dd9; }
 
-    /* --- Barra progreso --- */
-    .barra-wrap { width: 100%; margin: 8px 0 2px; }
+    /* --- Barra progreso con label flotante dentro --- */
+    .barra-wrap { width: 100%; margin: 4px 0 0; position: relative; }
     .barra-fondo {
-      width: 100%; height: 18px;
-      background: #ddd; border-radius: 9px; overflow: hidden;
+      width: 100%; height: 22px;
+      background: #ddd; border-radius: 11px; overflow: hidden;
     }
     .barra-fill {
-      height: 100%; border-radius: 9px;
+      height: 100%; border-radius: 11px;
       transition: width 1s linear, background 0.4s;
     }
     .barra-fill.ejercicio { background: var(--verde); }
     .barra-fill.descanso  { background: #5b8dd9; }
     .barra-label {
-      font-size: 0.85rem; color: var(--text-suave);
-      text-align: right; margin-top: 4px;
+      position: absolute; right: 10px; top: 0; bottom: 0;
+      display: flex; align-items: center;
+      font-size: 0.72rem; font-weight: bold;
+      color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.45);
     }
 
-    /* --- Zona de media --- */
+    /* --- Zona de media: crece para llenar espacio disponible --- */
     #media-wrap {
-      width: 100%; min-height: 260px; max-height: 340px;
+      flex: 1; min-height: 0;
+      width: 100%;
       display: flex; align-items: center; justify-content: center;
-      margin: 8px 0 6px; border-radius: var(--radio);
+      margin: 8px 0 4px; border-radius: var(--radio);
       overflow: hidden; background: var(--verde-bg);
       font-size: 8rem; line-height: 1;
       transition: background 0.4s;
     }
     #media-wrap.descanso { background: #e8eef8; }
     #media-wrap .media-img {
-      width: 100%; height: 100%; max-height: 340px;
+      width: 100%; height: 100%;
       object-fit: contain; border-radius: var(--radio);
     }
     #media-wrap video.media-img { object-fit: cover; }
-    #media-wrap iframe.media-img { width: 100%; height: 300px; border: none; }
+    #media-wrap iframe.media-img { width: 100%; height: 100%; border: none; }
 
     /* --- Descripción del ejercicio --- */
     .ej-desc-grande {
@@ -105,9 +135,9 @@
     }
 
     /* --- Controles --- */
-    .controles { display: flex; gap: 14px; width: 100%; margin-top: 14px; }
+    .controles { display: flex; gap: 12px; width: 100%; margin-top: 8px; }
     .btn-ctrl {
-      flex: 1; min-height: 68px; font-size: 1.6rem;
+      flex: 1; min-height: 60px; font-size: 1.5rem;
       border: none; border-radius: var(--radio); cursor: pointer;
       transition: transform 0.1s; user-select: none;
     }
@@ -139,13 +169,21 @@
 
   <!-- Overlay de inicio -->
   <div id="overlay">
-    <div style="font-size:5rem;">💪</div>
-    <h1>¡Vamos a ello!</h1>
-    <p>Toca el botón cuando estés lista.<br>¡Sin prisas, a tu ritmo!</p>
+    <h1>¡Vamos a ello! 💪</h1>
+
+    <!-- Primer ejercicio para que se prepare -->
+    <div id="overlay-ejercicio">
+      <div id="overlay-ejercicio-thumb"></div>
+      <div>
+        <div class="overlay-label">Primer ejercicio</div>
+        <div id="overlay-ejercicio-nombre"></div>
+      </div>
+    </div>
+
     <button class="btn" onclick="arrancar()">¡Empezar ya! 🌟</button>
     <button class="btn btn-secundario"
             onclick="window.location.href='preview.html'"
-            style="max-width:340px; margin-top:12px;">← Volver</button>
+            style="max-width:340px; margin-top:4px;">← Volver</button>
   </div>
 
   <!-- Timer -->
@@ -501,6 +539,18 @@
       iniciarMusica(ejercicios[0]?._tipo || '');
       intervalo = setInterval(tick, 1000);
     }
+
+    // Mostrar primer ejercicio en el overlay
+    (function() {
+      const primero = ejercicios[0];
+      if (!primero) return;
+      document.getElementById('overlay-ejercicio-nombre').textContent =
+        primero.nombre || '';
+      insertarMedia(
+        document.getElementById('overlay-ejercicio-thumb'),
+        primero.animacion, primero.emoji || '🏃', 'media-img'
+      );
+    })();
 
     actualizarTimer();
   </script>

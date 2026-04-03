@@ -29,7 +29,7 @@
 
     textarea {
       width: 100%;
-      min-height: 110px;
+      min-height: 100px;
       font-family: 'Georgia', serif;
       font-size: 1.1rem;
       padding: 16px;
@@ -38,7 +38,8 @@
       resize: none;
       background: white;
       color: var(--text);
-      margin-top: 10px;
+      margin-top: 6px;
+      box-shadow: var(--sombra);
     }
     textarea:focus {
       outline: none;
@@ -51,7 +52,6 @@
 
   <div style="font-size:4.5rem; text-align:center; margin-top:12px;">🌟</div>
   <h1 style="margin-top:10px;">¡Lo has hecho genial!</h1>
-  <p style="margin-top:8px;">¿Cuántas estrellas le das a la sesión de hoy?</p>
 
   <!-- Estrellas -->
   <div class="estrellas" id="estrellas" role="group" aria-label="Valoración">
@@ -63,10 +63,7 @@
   </div>
 
   <!-- Comentario opcional -->
-  <div class="tarjeta" style="text-align:left;">
-    <span class="etiqueta-verde">¿Cómo te has sentido? (opcional)</span>
-    <textarea id="comentario" placeholder="Escribe aquí si quieres contarme algo…"></textarea>
-  </div>
+  <textarea id="comentario" placeholder="¿Cómo te has sentido? (opcional)"></textarea>
 
   <button class="btn" id="btn-fin" onclick="enviar()">¡Terminado! 💚</button>
 

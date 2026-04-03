@@ -126,14 +126,32 @@ function swapEjercicio(posicion) {
   return ejercicios;
 }
 
-// ---- Sesión del día ----------------------------------------
+// ---- Sesión del día y racha --------------------------------
 
 function sesionCompletadaHoy() {
   return localStorage.getItem('sesion_fecha') === new Date().toDateString();
 }
 
+function getRacha() {
+  const hoy  = new Date().toDateString();
+  const ayer = new Date(Date.now() - 86400000).toDateString();
+  const fecha = localStorage.getItem('sesion_fecha');
+  const racha = parseInt(localStorage.getItem('sesion_racha') || '0');
+  if (fecha === hoy || fecha === ayer) return racha;
+  return 0;
+}
+
 function marcarSesionCompleta() {
-  localStorage.setItem('sesion_fecha', new Date().toDateString());
+  const hoy   = new Date().toDateString();
+  const ayer  = new Date(Date.now() - 86400000).toDateString();
+  const fecha = localStorage.getItem('sesion_fecha');
+  const racha = parseInt(localStorage.getItem('sesion_racha') || '0');
+
+  if (fecha === hoy) return; // ya registrado hoy, no tocar
+
+  const nuevaRacha = (fecha === ayer) ? racha + 1 : 1;
+  localStorage.setItem('sesion_racha', String(nuevaRacha));
+  localStorage.setItem('sesion_fecha', hoy);
 }
 
 // ---- Persistencia entre páginas ----------------------------
