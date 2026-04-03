@@ -18,7 +18,7 @@ const CONFIG = {
   FORM_ENTRY_COMENTARIO: "entry.1529383713",
 
   // 4. Nombre que aparece en el saludo
-  NOMBRE: "Mamá",
+  NOMBRE: "Abuela",
 
   // 5. Bloques de la sesión
   //    tipo    → debe coincidir exactamente con la columna "tipo" del Sheet
