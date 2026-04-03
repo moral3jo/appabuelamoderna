@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4a7c59">
+  <title>¡Hasta mañana!</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body { justify-content: center; text-align: center; }
+    .celebracion {
+      animation: aparecer 0.6s ease both;
+    }
+    @keyframes aparecer {
+      from { opacity: 0; transform: scale(0.8) translateY(20px); }
+      to   { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .celebracion { animation: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <div class="celebracion">
+    <div style="font-size:5.5rem; line-height:1; margin-bottom:16px;">🎉</div>
+
+    <h1 id="titulo" style="font-size:2.3rem;">¡Eres increíble!</h1>
+
+    <p style="margin-top:18px; font-size:1.15rem; line-height:1.85;">
+      Cada día que cuidas tu cuerpo<br>
+      es un regalo para ti.<br>
+      <br>
+      <strong style="color:var(--verde); font-size:1.3rem;">¡Vuelve mañana! 💚</strong>
+    </p>
+
+    <!-- Ilustración festiva -->
+    <svg viewBox="0 0 300 180" style="width:100%; max-width:300px; margin:28px auto; display:block;">
+      <circle cx="150" cy="90" r="85" fill="#e8f5e9"/>
+      <text x="150" y="82"  text-anchor="middle" font-size="52">🌻</text>
+      <text x="68"  y="140" text-anchor="middle" font-size="38">🌸</text>
+      <text x="232" y="138" text-anchor="middle" font-size="38">🌺</text>
+      <text x="150" y="148" text-anchor="middle" font-size="26">⭐ ⭐ ⭐</text>
+    </svg>
+
+    <p style="font-size:1rem; color:var(--text-suave); margin-top:8px;">
+      La app te espera aquí con cariño 🤗
+    </p>
+  </div>
+
+  <script src="config.js"></script>
+  <script>
+    document.getElementById('titulo').textContent = `¡${CONFIG.NOMBRE}, eres increíble!`;
+  </script>
+</body>
+</html>

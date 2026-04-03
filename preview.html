@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4a7c59">
+  <title>Tu rutina de hoy</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .ej-fila {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      text-align: left;
+      margin: 10px 0;
+      background: white;
+      border-radius: var(--radio);
+      padding: 16px 14px;
+      box-shadow: var(--sombra);
+    }
+    /* Miniatura: puede ser emoji, img, gif o iframe */
+    .ej-thumb {
+      min-width: 60px;
+      width: 60px;
+      height: 60px;
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.2rem;
+      background: var(--verde-bg);
+      flex-shrink: 0;
+    }
+    .ej-thumb .media-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 12px;
+    }
+    .ej-thumb iframe {
+      width: 120px;    /* iframe a 2x y escala abajo — YouTube no escala con %, necesita width fijo */
+      height: 120px;
+      transform: scale(0.5);
+      transform-origin: top left;
+      pointer-events: none;
+      border-radius: 0;
+    }
+    .ej-nombre {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+    .ej-duracion {
+      font-size: 0.9rem;
+      color: var(--text-suave);
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Tu rutina de hoy 💪</h1>
+  <p style="margin: 10px 0 6px; color: var(--verde); font-size: 1rem;">
+    ⏱ 7 minutos · Sin prisas · Tú puedes
+  </p>
+
+  <div id="lista" style="width:100%; margin-top:8px;"></div>
+
+  <button class="btn" onclick="window.location.href='workout.html'">¡Empezar! 🌟</button>
+  <button class="btn btn-secundario" onclick="window.location.href='index.html'">
+    ← Volver al inicio
+  </button>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    const ejercicios = cargarEjercicios();
+    if (ejercicios.length === 0) window.location.href = 'index.html';
+
+    function durStr(seg) {
+      seg = parseInt(seg) || 0;
+      const m = Math.floor(seg / 60);
+      const s = seg % 60;
+      if (m > 0 && s > 0) return `${m} min ${s} seg`;
+      if (m > 0)           return `${m} min`;
+      return `${s} seg`;
+    }
+
+    const lista = document.getElementById('lista');
+
+    ejercicios.forEach((ej, i) => {
+      // Columnas normalizadas: nombre, descripcion, segundos, animacion, emoji, grupo
+      const fila = document.createElement('div');
+      fila.className = 'ej-fila';
+
+      const thumb = document.createElement('div');
+      thumb.className = 'ej-thumb';
+      // animacion puede ser URL, nombre de archivo, data: o vacío → emoji
+      insertarMedia(thumb, ej.animacion, ej.emoji || '🏃', 'media-img');
+
+      const info = document.createElement('div');
+      info.innerHTML = `
+        <div class="ej-nombre">${i + 1}. ${ej.nombre || ej.id}</div>
+        <div class="ej-duracion">${durStr(ej.segundos)}</div>
+      `;
+
+      fila.appendChild(thumb);
+      fila.appendChild(info);
+      lista.appendChild(fila);
+    });
+  </script>
+</body>
+</html>

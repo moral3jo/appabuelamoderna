@@ -1,0 +1,22 @@
+{
+  "name": "App Mamá",
+  "short_name": "App Mamá",
+  "description": "Bienestar diario: consejo natural + ejercicios de 7 minutos",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#fdf6e3",
+  "theme_color": "#4a7c59",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "img/icono-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "img/icono-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

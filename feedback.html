@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#4a7c59">
+  <title>¡Genial!</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .estrellas {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin: 20px 0;
+    }
+    .estrella {
+      font-size: 3.2rem;
+      cursor: pointer;
+      transition: transform 0.12s;
+      user-select: none;
+      line-height: 1;
+    }
+    .estrella:active { transform: scale(1.25); }
+
+    textarea {
+      width: 100%;
+      min-height: 110px;
+      font-family: 'Georgia', serif;
+      font-size: 1.1rem;
+      padding: 16px;
+      border: 2px solid #ddd;
+      border-radius: var(--radio);
+      resize: none;
+      background: white;
+      color: var(--text);
+      margin-top: 10px;
+    }
+    textarea:focus {
+      outline: none;
+      border-color: var(--verde);
+    }
+    ::placeholder { color: #bbb; }
+  </style>
+</head>
+<body>
+
+  <div style="font-size:4.5rem; text-align:center; margin-top:12px;">🌟</div>
+  <h1 style="margin-top:10px;">¡Lo has hecho genial!</h1>
+  <p style="margin-top:8px;">¿Cuántas estrellas le das a la sesión de hoy?</p>
+
+  <!-- Estrellas -->
+  <div class="estrellas" id="estrellas" role="group" aria-label="Valoración">
+    <span class="estrella" onclick="puntuar(1)" aria-label="1 estrella">⭐</span>
+    <span class="estrella" onclick="puntuar(2)" aria-label="2 estrellas">⭐</span>
+    <span class="estrella" onclick="puntuar(3)" aria-label="3 estrellas">⭐</span>
+    <span class="estrella" onclick="puntuar(4)" aria-label="4 estrellas">⭐</span>
+    <span class="estrella" onclick="puntuar(5)" aria-label="5 estrellas">⭐</span>
+  </div>
+
+  <!-- Comentario opcional -->
+  <div class="tarjeta" style="text-align:left;">
+    <span class="etiqueta-verde">¿Cómo te has sentido? (opcional)</span>
+    <textarea id="comentario" placeholder="Escribe aquí si quieres contarme algo…"></textarea>
+  </div>
+
+  <button class="btn" id="btn-fin" onclick="enviar()">¡Terminado! 💚</button>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+  <script>
+    let nota = 0;
+
+    function puntuar(n) {
+      nota = n;
+      document.querySelectorAll('.estrella').forEach((el, i) => {
+        el.textContent = i < n ? '🌟' : '⭐';
+        el.style.transform = i < n ? 'scale(1.1)' : '';
+      });
+    }
+
+    async function enviar() {
+      const btn       = document.getElementById('btn-fin');
+      btn.disabled    = true;
+      btn.textContent = 'Enviando…';
+
+      const estrellas  = nota || 5;
+      const comentario = document.getElementById('comentario').value.trim();
+
+      // POST a Google Forms (no-cors: no hay confirmación pero llega)
+      try {
+        const form = new FormData();
+        form.append(CONFIG.FORM_ENTRY_ESTRELLAS,  String(estrellas));
+        form.append(CONFIG.FORM_ENTRY_COMENTARIO, comentario);
+
+        await fetch(
+          `https://docs.google.com/forms/d/${CONFIG.FORM_ID}/formResponse`,
+          { method: 'POST', body: form, mode: 'no-cors' }
+        );
+      } catch {
+        // Con no-cors el fetch siempre genera error aunque el dato llegue.
+        // No mostramos error al usuario.
+      }
+
+      marcarSesionCompleta();
+      window.location.href = 'fin.html';
+    }
+  </script>
+</body>
+</html>
