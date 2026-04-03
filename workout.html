@@ -79,21 +79,16 @@
 
     /* --- Card "a continuación" durante el descanso --- */
     #siguiente-card {
-      display: none;
-      width: 100%;
-      background: white;
-      border-radius: var(--radio);
-      padding: 14px 16px;
-      box-shadow: var(--sombra);
-      margin-top: 10px;
-      text-align: left;
+      display: none; width: 100%;
+      background: white; border-radius: var(--radio);
+      padding: 14px 16px; box-shadow: var(--sombra);
+      margin-top: 10px; text-align: left;
     }
     #siguiente-card.visible { display: flex; align-items: center; gap: 14px; }
     .siguiente-label {
-      font-size: 0.8rem; color: #5b8dd9;
-      font-weight: bold; margin-bottom: 4px;
-      display: block; text-transform: uppercase;
-      letter-spacing: 0.05em;
+      font-size: 0.8rem; color: #5b8dd9; font-weight: bold;
+      margin-bottom: 4px; display: block;
+      text-transform: uppercase; letter-spacing: 0.05em;
     }
     .siguiente-thumb {
       min-width: 52px; width: 52px; height: 52px;
@@ -104,12 +99,17 @@
     .siguiente-thumb .media-img {
       width: 100%; height: 100%; object-fit: cover; border-radius: 10px;
     }
-    .siguiente-nombre {
-      font-size: 1.05rem; font-weight: bold; color: var(--text);
+    .siguiente-nombre { font-size: 1.05rem; font-weight: bold; color: var(--text); }
+
+    /* --- Indicador de música --- */
+    #music-indicator {
+      font-size: 0.82rem; color: var(--text-suave);
+      text-align: center; margin-top: 2px; min-height: 1.2em;
+      transition: opacity 0.5s;
     }
 
     /* --- Controles --- */
-    .controles { display: flex; gap: 14px; width: 100%; margin-top: 16px; }
+    .controles { display: flex; gap: 14px; width: 100%; margin-top: 14px; }
     .btn-ctrl {
       flex: 1; min-height: 68px; font-size: 1.6rem;
       border: none; border-radius: var(--radio); cursor: pointer;
@@ -119,8 +119,7 @@
     .btn-pausa { background: var(--amarillo); color: var(--text); }
     .btn-salir  { background: #ffcdd2; color: #c62828; }
     #btn-saltar {
-      display: none;
-      background: #e8eef8; color: #5b8dd9;
+      display: none; background: #e8eef8; color: #5b8dd9;
       font-size: 1rem; font-weight: bold;
     }
     #btn-saltar.visible { display: block; }
@@ -155,7 +154,7 @@
 
   <!-- Timer -->
   <div class="timer-wrap">
-    <div class="timer ejercicio" id="timer">7:00</div>
+    <div class="timer ejercicio" id="timer">–:––</div>
   </div>
 
   <!-- Barra progreso -->
@@ -172,6 +171,9 @@
   <!-- Nombre y descripción -->
   <div class="ej-nombre-grande" id="ej-nombre">Preparando…</div>
   <div class="ej-desc-grande"   id="ej-desc"></div>
+
+  <!-- Indicador de música -->
+  <div id="music-indicator"></div>
 
   <!-- Card "a continuación" (solo visible en descanso) -->
   <div id="siguiente-card">
@@ -192,25 +194,25 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    const ejercicios   = cargarEjercicios();
+    const ejercicios = cargarEjercicios();
     if (ejercicios.length === 0) window.location.href = 'index.html';
 
-    const DESCANSO     = CONFIG.DESCANSO_SEGUNDOS || 60;
-    const TOTAL_EJ     = ejercicios.reduce((s, e) => s + (parseInt(e.segundos) || 60), 0);
-    const TOTAL_DESC   = DESCANSO * (ejercicios.length - 1);
-    const TOTAL_SEGS   = TOTAL_EJ + TOTAL_DESC;
+    const DESCANSO   = CONFIG.DESCANSO_SEGUNDOS || 60;
+    const TOTAL_EJ   = ejercicios.reduce((s, e) => s + (parseInt(e.segundos) || 60), 0);
+    const TOTAL_SEGS = TOTAL_EJ + DESCANSO * (ejercicios.length - 1);
 
     // Estado
-    let modo           = 'ejercicio';   // 'ejercicio' | 'descanso'
-    let idxActual      = 0;
-    let segsRestantes  = parseInt(ejercicios[0]?.segundos) || 60;
-    let segsEjercicio  = segsRestantes;
-    let segsTransc     = 0;
-    let pausado        = false;
-    let intervalo      = null;
-    let audioCtx       = null;
+    let modo          = 'ejercicio';
+    let idxActual     = 0;
+    let segsRestantes = parseInt(ejercicios[0]?.segundos) || 60;
+    let segsTransc    = 0;
+    let pausado       = false;
+    let intervalo     = null;
 
-    // ---- Audio ----
+    // ================================================================
+    //  AUDIO — efectos (Web Audio API)
+    // ================================================================
+    let audioCtx = null;
 
     function crearAudioCtx() {
       if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -242,22 +244,129 @@
       [0, 0.18, 0.36, 0.54, 0.72].forEach((t, i) => tono(400 + i * 100, 0.22, t, 0.30));
     }
 
-    // ---- UI ----
+    // ================================================================
+    //  MÚSICA DE FONDO
+    //  sounds/relax.mp3   → calentamiento, cierre, estiramiento, descanso
+    //  sounds/animado.mp3 → central
+    //  Arranca en posición aleatoria para que nunca suene igual.
+    //  Fade suave al cambiar de pista.
+    // ================================================================
+
+    // Qué archivo corresponde a cada tipo de bloque
+    function archivoMusica(tipoBloque) {
+      return (tipoBloque || '').toLowerCase() === 'central'
+        ? 'sounds/animado.mp3'
+        : 'sounds/relax.mp3';
+    }
+
+    let musicaActual     = null;   // objeto Audio en reproducción
+    let archivoActual    = null;   // ruta del archivo que suena ahora
+    let fadeIntervalo    = null;   // intervalo del fade en curso
+
+    function cancelarFade() {
+      if (fadeIntervalo) { clearInterval(fadeIntervalo); fadeIntervalo = null; }
+    }
+
+    function fadeVolumen(audio, destino, durMs, alTerminar) {
+      cancelarFade();
+      const paso      = 50;
+      const pasos     = durMs / paso;
+      const delta     = (destino - audio.volume) / pasos;
+      fadeIntervalo = setInterval(() => {
+        audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
+        if ((delta > 0 && audio.volume >= destino) ||
+            (delta < 0 && audio.volume <= destino)) {
+          audio.volume = destino;
+          cancelarFade();
+          if (alTerminar) alTerminar();
+        }
+      }, paso);
+    }
+
+    function iniciarMusica(tipoBloque) {
+      const archivo = archivoMusica(tipoBloque);
+      if (archivo === archivoActual && musicaActual && !musicaActual.paused) return;
+
+      // Fade out y reemplazar
+      const viejo = musicaActual;
+      if (viejo) {
+        fadeVolumen(viejo, 0, 1500, () => { viejo.pause(); viejo.src = ''; });
+      }
+
+      const nuevo    = new Audio(archivo);
+      nuevo.loop     = true;
+      nuevo.volume   = 0;
+      musicaActual   = nuevo;
+      archivoActual  = archivo;
+
+      // Inicio aleatorio: esperamos la duración y arrancamos en punto random
+      nuevo.addEventListener('loadedmetadata', () => {
+        // Deja al menos 2 min al final para que loop no sea inmediato
+        const margen = Math.min(120, nuevo.duration * 0.1);
+        const max    = Math.max(0, nuevo.duration - margen);
+        nuevo.currentTime = Math.random() * max;
+        nuevo.play().catch(() => {});
+        fadeVolumen(nuevo, 0.55, 2000);
+        mostrarIndicadorMusica(tipoBloque);
+      }, { once: true });
+
+      nuevo.addEventListener('error', () => {
+        // El archivo no existe: silencio total, sin error visible
+        archivoActual = null;
+        musicaActual  = null;
+      }, { once: true });
+
+      // Intentar cargar (el play real lo da loadedmetadata)
+      nuevo.load();
+    }
+
+    function pausarMusica() {
+      if (musicaActual && !musicaActual.paused) musicaActual.pause();
+    }
+
+    function reanudarMusica() {
+      if (musicaActual && musicaActual.paused && archivoActual) {
+        musicaActual.play().catch(() => {});
+      }
+    }
+
+    function detenerMusica() {
+      cancelarFade();
+      if (musicaActual) {
+        fadeVolumen(musicaActual, 0, 1200, () => {
+          musicaActual.pause();
+          musicaActual = null;
+          archivoActual = null;
+        });
+      }
+    }
+
+    function mostrarIndicadorMusica(tipoBloque) {
+      const el   = document.getElementById('music-indicator');
+      const tipo = (tipoBloque || '').toLowerCase();
+      el.textContent = tipo === 'central' ? '🎵 Música animada' : '🎵 Música relajante';
+      el.style.opacity = '1';
+      setTimeout(() => { el.style.opacity = '0'; }, 3000);
+    }
+
+    // ================================================================
+    //  UI
+    // ================================================================
 
     function pintarModo() {
       const esDescanso = (modo === 'descanso');
       document.getElementById('timer').className    = `timer ${modo}`;
       document.getElementById('barra').className    = `barra-fill ${modo}`;
-      document.getElementById('media-wrap').className = esDescanso ? 'descanso' : '';
+      document.getElementById('media-wrap').className     = esDescanso ? 'descanso' : '';
       document.getElementById('siguiente-card').className = esDescanso ? 'visible' : '';
       document.getElementById('btn-saltar').className     = esDescanso ? 'btn-ctrl visible' : 'btn-ctrl';
     }
 
     function actualizarEjercicio() {
       const ej = ejercicios[idxActual];
-      document.getElementById('ej-nombre').textContent = ej.nombre || '';
-      document.getElementById('ej-desc').textContent   = ej.descripcion || '';
-      document.getElementById('barra-label').textContent =
+      document.getElementById('ej-nombre').textContent    = ej.nombre      || '';
+      document.getElementById('ej-desc').textContent      = ej.descripcion || '';
+      document.getElementById('barra-label').textContent  =
         `Ejercicio ${idxActual + 1} de ${ejercicios.length}`;
       insertarMedia(document.getElementById('media-wrap'), ej.animacion, ej.emoji || '🏃', 'media-img');
     }
@@ -267,7 +376,6 @@
       document.getElementById('ej-nombre').textContent = '¡Descansa!';
       document.getElementById('ej-desc').textContent   = 'Respira, bebe agua si necesitas.';
       document.getElementById('media-wrap').textContent = '💧';
-
       if (siguiente) {
         document.getElementById('siguiente-nombre').textContent = siguiente.nombre || '';
         insertarMedia(
@@ -281,19 +389,20 @@
       const m = Math.floor(segsRestantes / 60);
       const s = segsRestantes % 60;
       document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
-
-      const pct = Math.min(100, (segsTransc / TOTAL_SEGS) * 100);
-      document.getElementById('barra').style.width = pct + '%';
+      document.getElementById('barra').style.width =
+        Math.min(100, (segsTransc / TOTAL_SEGS) * 100) + '%';
     }
 
     function mostrarBanner(texto, tipo) {
       const b = document.getElementById('banner-cambio');
       b.textContent = texto;
       b.className   = `visible ${tipo}`;
-      setTimeout(() => b.className = tipo, 2000);
+      setTimeout(() => b.className = tipo, 2200);
     }
 
-    // ---- Lógica ----
+    // ================================================================
+    //  LÓGICA DEL TIMER
+    // ================================================================
 
     function empezarDescanso() {
       modo          = 'descanso';
@@ -302,27 +411,30 @@
       actualizarDescanso();
       sonidoInicioDescanso();
       mostrarBanner('💧 ¡Descansa un momento!', 'descanso');
+      // Música: durante descanso suena relax (fade suave si venía de central)
+      iniciarMusica('descanso');
     }
 
     function empezarEjercicio() {
       modo          = 'ejercicio';
       segsRestantes = parseInt(ejercicios[idxActual].segundos) || 60;
+      const tipo    = ejercicios[idxActual]._tipo || '';
       pintarModo();
       actualizarEjercicio();
       sonidoInicioEjercicio();
       mostrarBanner(`🌟 Ejercicio ${idxActual + 1}: ${ejercicios[idxActual].nombre}`, 'ejercicio');
+      iniciarMusica(tipo);
     }
 
     function saltarDescanso() {
       if (modo !== 'descanso') return;
-      segsTransc += segsRestantes;   // contar el tiempo saltado como transcurrido
+      segsTransc   += segsRestantes;
       segsRestantes = 0;
       tick();
     }
 
     function tick() {
       if (pausado) return;
-
       if (segsRestantes === 3) sonidoAviso();
 
       segsRestantes--;
@@ -331,15 +443,11 @@
 
       if (segsRestantes > 0) return;
 
-      // Fin de un bloque
       if (modo === 'ejercicio') {
         idxActual++;
-        if (idxActual >= ejercicios.length) {
-          finSesion(); return;
-        }
+        if (idxActual >= ejercicios.length) { finSesion(); return; }
         empezarDescanso();
       } else {
-        // Fin del descanso → siguiente ejercicio
         empezarEjercicio();
       }
     }
@@ -348,16 +456,19 @@
       pausado = !pausado;
       document.getElementById('btn-pausa').textContent = pausado ? '▶' : '⏸';
       if (audioCtx) pausado ? audioCtx.suspend() : audioCtx.resume();
+      pausado ? pausarMusica() : reanudarMusica();
     }
 
     function salir() {
       clearInterval(intervalo);
+      detenerMusica();
       window.location.href = 'feedback.html';
     }
 
     function finSesion() {
       clearInterval(intervalo);
       sonidoFin();
+      detenerMusica();
       marcarSesionCompleta();
 
       document.getElementById('timer').textContent       = '0:00';
@@ -365,17 +476,19 @@
       document.getElementById('media-wrap').textContent  = '🎉';
       document.getElementById('ej-nombre').textContent   = '¡Lo has conseguido!';
       document.getElementById('ej-desc').textContent     = '¡Eres increíble!';
+      document.getElementById('music-indicator').textContent = '';
       document.getElementById('siguiente-card').className = '';
       document.getElementById('btn-saltar').className     = 'btn-ctrl';
       document.getElementById('btn-pausa').style.display  = 'none';
       const btnSalir = document.querySelector('.btn-salir');
       btnSalir.textContent = 'Continuar →';
       btnSalir.onclick     = () => window.location.href = 'feedback.html';
-
       setTimeout(() => window.location.href = 'feedback.html', 3500);
     }
 
-    // ---- Arrancar ----
+    // ================================================================
+    //  ARRANCAR (gesto de usuario → AudioContext + música permitidos)
+    // ================================================================
 
     function arrancar() {
       crearAudioCtx();
@@ -383,6 +496,7 @@
       actualizarEjercicio();
       actualizarTimer();
       pintarModo();
+      iniciarMusica(ejercicios[0]?._tipo || '');
       intervalo = setInterval(tick, 1000);
     }
 
