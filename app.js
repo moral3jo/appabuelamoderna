@@ -57,9 +57,18 @@ async function getConsejoDelDia() {
  * Columnas del sheet: id, nombre, descripcion, segundos, animacion, emoji, grupo
  */
 async function getEjerciciosDelDia() {
-  const todos = await leerSheet('ejercicios');
-  const n     = Math.min(CONFIG.EJERCICIOS_POR_SESION, todos.length);
-  const seed  = dayOfYear();
+  let todos = await leerSheet('ejercicios');
+
+  // Filtrar por grupo si está configurado
+  if (CONFIG.GRUPO && CONFIG.GRUPO.trim() !== '') {
+    const grupoBuscado = CONFIG.GRUPO.trim().toLowerCase();
+    const filtrados    = todos.filter(e => (e.grupo || '').toLowerCase() === grupoBuscado);
+    if (filtrados.length > 0) todos = filtrados;
+    // Si el filtro no da resultados, usa todos (evita romper la app)
+  }
+
+  const n    = Math.min(CONFIG.EJERCICIOS_POR_SESION, todos.length);
+  const seed = dayOfYear();
 
   const seleccionados = [];
   const usados        = new Set();

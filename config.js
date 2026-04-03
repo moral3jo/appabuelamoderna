@@ -24,6 +24,14 @@ const CONFIG = {
   EJERCICIOS_POR_SESION: 4,
 
   // 6. Duración total en segundos (420 = 7 minutos)
+  //    No incluyas el tiempo de descanso aquí, se calcula automáticamente
   DURACION_TOTAL: 420,
+
+  // 7. Segundos de descanso entre ejercicios (60 = 1 minuto)
+  DESCANSO_SEGUNDOS: 60,
+
+  // 8. Filtro de grupo (deja vacío "" para usar todos los ejercicios del sheet)
+  //    Pon "Suave", "Medio", etc. para usar solo ejercicios de ese grupo
+  GRUPO: "",
 
 };

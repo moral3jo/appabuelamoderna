@@ -14,13 +14,9 @@
     #overlay {
       position: fixed; inset: 0;
       background: var(--crema);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      z-index: 100;
-      padding: 32px;
-      text-align: center;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      z-index: 100; padding: 32px; text-align: center;
     }
     #overlay h1 { font-size: 2.2rem; margin-bottom: 20px; }
     #overlay p  { font-size: 1.15rem; margin-bottom: 32px; }
@@ -29,12 +25,12 @@
     /* --- Timer --- */
     .timer-wrap { width: 100%; text-align: center; margin: 14px 0 4px; }
     .timer {
-      font-size: 5.5rem;
-      font-weight: bold;
-      color: var(--verde);
-      font-variant-numeric: tabular-nums;
-      line-height: 1;
+      font-size: 5.5rem; font-weight: bold;
+      font-variant-numeric: tabular-nums; line-height: 1;
+      transition: color 0.4s;
     }
+    .timer.ejercicio { color: var(--verde); }
+    .timer.descanso  { color: #5b8dd9; }
 
     /* --- Barra progreso --- */
     .barra-wrap { width: 100%; margin: 8px 0 2px; }
@@ -43,96 +39,110 @@
       background: #ddd; border-radius: 9px; overflow: hidden;
     }
     .barra-fill {
-      height: 100%;
-      background: var(--verde);
-      border-radius: 9px;
-      transition: width 1s linear;
+      height: 100%; border-radius: 9px;
+      transition: width 1s linear, background 0.4s;
     }
+    .barra-fill.ejercicio { background: var(--verde); }
+    .barra-fill.descanso  { background: #5b8dd9; }
     .barra-label {
       font-size: 0.85rem; color: var(--text-suave);
       text-align: right; margin-top: 4px;
     }
 
-    /* --- Zona de media (imagen/gif/video/youtube/emoji) --- */
+    /* --- Zona de media --- */
     #media-wrap {
-      width: 100%;
-      min-height: 200px;
-      max-height: 260px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 12px 0 4px;
-      border-radius: var(--radio);
-      overflow: hidden;
-      background: var(--verde-bg);
-      font-size: 7rem;      /* fallback emoji */
-      line-height: 1;
+      width: 100%; min-height: 180px; max-height: 240px;
+      display: flex; align-items: center; justify-content: center;
+      margin: 10px 0 4px; border-radius: var(--radio);
+      overflow: hidden; background: var(--verde-bg);
+      font-size: 6.5rem; line-height: 1;
+      transition: background 0.4s;
     }
+    #media-wrap.descanso { background: #e8eef8; }
     #media-wrap .media-img {
-      width: 100%;
-      height: 100%;
-      max-height: 260px;
-      object-fit: contain;
-      border-radius: var(--radio);
+      width: 100%; height: 100%; max-height: 240px;
+      object-fit: contain; border-radius: var(--radio);
     }
-    #media-wrap video.media-img {
-      object-fit: cover;
-    }
-    #media-wrap iframe.media-img {
-      width: 100%;
-      height: 220px;
-      border: none;
-    }
+    #media-wrap video.media-img { object-fit: cover; }
+    #media-wrap iframe.media-img { width: 100%; height: 200px; border: none; }
 
-    /* --- Nombre y descripción del ejercicio --- */
+    /* --- Nombre y descripción --- */
     .ej-nombre-grande {
-      font-size: 1.85rem;
-      font-weight: bold;
-      color: var(--text);
-      text-align: center;
-      margin: 8px 0 6px;
-      line-height: 1.25;
+      font-size: 1.85rem; font-weight: bold;
+      color: var(--text); text-align: center;
+      margin: 8px 0 4px; line-height: 1.25;
     }
     .ej-desc-grande {
-      font-size: 1rem;
-      color: var(--text-suave);
-      text-align: center;
-      line-height: 1.6;
+      font-size: 1rem; color: var(--text-suave);
+      text-align: center; line-height: 1.6;
+    }
+
+    /* --- Card "a continuación" durante el descanso --- */
+    #siguiente-card {
+      display: none;
+      width: 100%;
+      background: white;
+      border-radius: var(--radio);
+      padding: 14px 16px;
+      box-shadow: var(--sombra);
+      margin-top: 10px;
+      text-align: left;
+    }
+    #siguiente-card.visible { display: flex; align-items: center; gap: 14px; }
+    .siguiente-label {
+      font-size: 0.8rem; color: #5b8dd9;
+      font-weight: bold; margin-bottom: 4px;
+      display: block; text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .siguiente-thumb {
+      min-width: 52px; width: 52px; height: 52px;
+      border-radius: 10px; background: #e8eef8;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2rem; overflow: hidden; flex-shrink: 0;
+    }
+    .siguiente-thumb .media-img {
+      width: 100%; height: 100%; object-fit: cover; border-radius: 10px;
+    }
+    .siguiente-nombre {
+      font-size: 1.05rem; font-weight: bold; color: var(--text);
     }
 
     /* --- Controles --- */
-    .controles {
-      display: flex; gap: 14px;
-      width: 100%; margin-top: 20px;
-    }
+    .controles { display: flex; gap: 14px; width: 100%; margin-top: 16px; }
     .btn-ctrl {
       flex: 1; min-height: 68px; font-size: 1.6rem;
-      border: none; border-radius: var(--radio);
-      cursor: pointer;
-      transition: transform 0.1s;
-      user-select: none;
+      border: none; border-radius: var(--radio); cursor: pointer;
+      transition: transform 0.1s; user-select: none;
     }
     .btn-ctrl:active { transform: scale(0.96); }
     .btn-pausa { background: var(--amarillo); color: var(--text); }
     .btn-salir  { background: #ffcdd2; color: #c62828; }
+    #btn-saltar {
+      display: none;
+      background: #e8eef8; color: #5b8dd9;
+      font-size: 1rem; font-weight: bold;
+    }
+    #btn-saltar.visible { display: block; }
 
     /* --- Banner cambio --- */
     #banner-cambio {
       position: fixed; top: 0; left: 0; right: 0;
-      background: var(--verde); color: white;
-      text-align: center; font-size: 1.3rem; padding: 18px;
+      color: white; text-align: center; font-size: 1.3rem; padding: 18px;
       transform: translateY(-100%);
-      transition: transform 0.3s ease;
+      transition: transform 0.3s ease, background 0.3s;
       z-index: 50;
     }
     #banner-cambio.visible { transform: translateY(0); }
+    #banner-cambio.ejercicio { background: var(--verde); }
+    #banner-cambio.descanso  { background: #5b8dd9; }
   </style>
 </head>
 <body>
 
-  <div id="banner-cambio">🌟 ¡Siguiente ejercicio!</div>
+  <div id="banner-cambio"></div>
 
-  <!-- Overlay — el gesto de usuario aquí activa el AudioContext -->
+  <!-- Overlay de inicio -->
   <div id="overlay">
     <div style="font-size:5rem;">💪</div>
     <h1>¡Vamos a ello!</h1>
@@ -145,136 +155,192 @@
 
   <!-- Timer -->
   <div class="timer-wrap">
-    <div class="timer" id="timer">7:00</div>
+    <div class="timer ejercicio" id="timer">7:00</div>
   </div>
 
   <!-- Barra progreso -->
   <div class="barra-wrap">
     <div class="barra-fondo">
-      <div class="barra-fill" id="barra" style="width:0%"></div>
+      <div class="barra-fill ejercicio" id="barra" style="width:0%"></div>
     </div>
     <div class="barra-label" id="barra-label">Ejercicio 1 de 4</div>
   </div>
 
-  <!-- Media del ejercicio (img / gif / video / iframe / emoji) -->
+  <!-- Media del ejercicio -->
   <div id="media-wrap"></div>
 
   <!-- Nombre y descripción -->
   <div class="ej-nombre-grande" id="ej-nombre">Preparando…</div>
   <div class="ej-desc-grande"   id="ej-desc"></div>
 
+  <!-- Card "a continuación" (solo visible en descanso) -->
+  <div id="siguiente-card">
+    <div class="siguiente-thumb" id="siguiente-thumb"></div>
+    <div>
+      <span class="siguiente-label">A continuación…</span>
+      <div class="siguiente-nombre" id="siguiente-nombre"></div>
+    </div>
+  </div>
+
   <!-- Controles -->
   <div class="controles">
     <button class="btn-ctrl btn-pausa" id="btn-pausa" onclick="togglePausa()">⏸</button>
-    <button class="btn-ctrl btn-salir"                onclick="salir()">✕</button>
+    <button class="btn-ctrl" id="btn-saltar" onclick="saltarDescanso()">Saltar descanso →</button>
+    <button class="btn-ctrl btn-salir" onclick="salir()">✕</button>
   </div>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    const ejercicios = cargarEjercicios();
+    const ejercicios   = cargarEjercicios();
     if (ejercicios.length === 0) window.location.href = 'index.html';
 
-    let idxActual         = 0;
-    let segsRestantesEj   = parseInt(ejercicios[0]?.segundos) || 60;
-    let segsTranscurridos = 0;
-    const TOTAL_SEGS      = CONFIG.DURACION_TOTAL;
-    let pausado           = false;
-    let intervalo         = null;
-    let audioCtx          = null;
+    const DESCANSO     = CONFIG.DESCANSO_SEGUNDOS || 60;
+    const TOTAL_EJ     = ejercicios.reduce((s, e) => s + (parseInt(e.segundos) || 60), 0);
+    const TOTAL_DESC   = DESCANSO * (ejercicios.length - 1);
+    const TOTAL_SEGS   = TOTAL_EJ + TOTAL_DESC;
+
+    // Estado
+    let modo           = 'ejercicio';   // 'ejercicio' | 'descanso'
+    let idxActual      = 0;
+    let segsRestantes  = parseInt(ejercicios[0]?.segundos) || 60;
+    let segsEjercicio  = segsRestantes;
+    let segsTransc     = 0;
+    let pausado        = false;
+    let intervalo      = null;
+    let audioCtx       = null;
 
     // ---- Audio ----
 
     function crearAudioCtx() {
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       if (audioCtx.state === 'suspended') audioCtx.resume();
     }
 
-    function tono(freq, durSeg, retrasoCx = 0, vol = 0.25) {
+    function tono(freq, dur, retraso = 0, vol = 0.25) {
       if (!audioCtx) return;
-      const osc  = audioCtx.createOscillator();
-      const gain = audioCtx.createGain();
-      osc.connect(gain);
-      gain.connect(audioCtx.destination);
-      osc.type            = 'sine';
-      osc.frequency.value = freq;
-      const t0 = audioCtx.currentTime + retrasoCx;
-      gain.gain.setValueAtTime(vol, t0);
-      gain.gain.exponentialRampToValueAtTime(0.001, t0 + durSeg);
-      osc.start(t0);
-      osc.stop(t0 + durSeg + 0.05);
+      const osc = audioCtx.createOscillator();
+      const g   = audioCtx.createGain();
+      osc.connect(g); g.connect(audioCtx.destination);
+      osc.type = 'sine'; osc.frequency.value = freq;
+      const t0 = audioCtx.currentTime + retraso;
+      g.gain.setValueAtTime(vol, t0);
+      g.gain.exponentialRampToValueAtTime(0.001, t0 + dur);
+      osc.start(t0); osc.stop(t0 + dur + 0.05);
     }
 
-    function sonidoCambio()  {
-      tono(523, 0.12, 0.00);
-      tono(659, 0.12, 0.18);
-      tono(784, 0.25, 0.36);
+    function sonidoInicioEjercicio() {
+      tono(523, 0.12, 0.00); tono(659, 0.12, 0.18); tono(784, 0.25, 0.36);
     }
-    function sonidoAviso()   {
-      tono(880, 0.08, 0.00);
-      tono(880, 0.08, 0.14);
-      tono(880, 0.08, 0.28);
+    function sonidoInicioDescanso() {
+      tono(440, 0.20, 0.00); tono(370, 0.30, 0.25);
     }
-    function sonidoFin()     {
+    function sonidoAviso() {
+      tono(880, 0.08, 0.00); tono(880, 0.08, 0.14); tono(880, 0.08, 0.28);
+    }
+    function sonidoFin() {
       [0, 0.18, 0.36, 0.54, 0.72].forEach((t, i) => tono(400 + i * 100, 0.22, t, 0.30));
     }
 
     // ---- UI ----
 
+    function pintarModo() {
+      const esDescanso = (modo === 'descanso');
+      document.getElementById('timer').className    = `timer ${modo}`;
+      document.getElementById('barra').className    = `barra-fill ${modo}`;
+      document.getElementById('media-wrap').className = esDescanso ? 'descanso' : '';
+      document.getElementById('siguiente-card').className = esDescanso ? 'visible' : '';
+      document.getElementById('btn-saltar').className     = esDescanso ? 'btn-ctrl visible' : 'btn-ctrl';
+    }
+
     function actualizarEjercicio() {
       const ej = ejercicios[idxActual];
-      document.getElementById('ej-nombre').textContent = ej.nombre  || ej.id || '';
+      document.getElementById('ej-nombre').textContent = ej.nombre || '';
       document.getElementById('ej-desc').textContent   = ej.descripcion || '';
       document.getElementById('barra-label').textContent =
         `Ejercicio ${idxActual + 1} de ${ejercicios.length}`;
+      insertarMedia(document.getElementById('media-wrap'), ej.animacion, ej.emoji || '🏃', 'media-img');
+    }
 
-      // Media: columna "animacion" (normalizada desde "Animación")
-      insertarMedia(
-        document.getElementById('media-wrap'),
-        ej.animacion,
-        ej.emoji || '🏃',
-        'media-img'
-      );
+    function actualizarDescanso() {
+      const siguiente = ejercicios[idxActual + 1];
+      document.getElementById('ej-nombre').textContent = '¡Descansa!';
+      document.getElementById('ej-desc').textContent   = 'Respira, bebe agua si necesitas.';
+      document.getElementById('media-wrap').textContent = '💧';
+
+      if (siguiente) {
+        document.getElementById('siguiente-nombre').textContent = siguiente.nombre || '';
+        insertarMedia(
+          document.getElementById('siguiente-thumb'),
+          siguiente.animacion, siguiente.emoji || '🏃', 'media-img'
+        );
+      }
     }
 
     function actualizarTimer() {
-      const m = Math.floor(segsRestantesEj / 60);
-      const s = segsRestantesEj % 60;
-      document.getElementById('timer').textContent =
-        `${m}:${s.toString().padStart(2, '0')}`;
+      const m = Math.floor(segsRestantes / 60);
+      const s = segsRestantes % 60;
+      document.getElementById('timer').textContent = `${m}:${s.toString().padStart(2, '0')}`;
 
-      const pct = Math.min(100, (segsTranscurridos / TOTAL_SEGS) * 100);
+      const pct = Math.min(100, (segsTransc / TOTAL_SEGS) * 100);
       document.getElementById('barra').style.width = pct + '%';
     }
 
-    function mostrarBannerCambio() {
+    function mostrarBanner(texto, tipo) {
       const b = document.getElementById('banner-cambio');
-      b.classList.add('visible');
-      setTimeout(() => b.classList.remove('visible'), 1800);
+      b.textContent = texto;
+      b.className   = `visible ${tipo}`;
+      setTimeout(() => b.className = tipo, 2000);
     }
 
-    // ---- Lógica del timer ----
+    // ---- Lógica ----
+
+    function empezarDescanso() {
+      modo          = 'descanso';
+      segsRestantes = DESCANSO;
+      pintarModo();
+      actualizarDescanso();
+      sonidoInicioDescanso();
+      mostrarBanner('💧 ¡Descansa un momento!', 'descanso');
+    }
+
+    function empezarEjercicio() {
+      modo          = 'ejercicio';
+      segsRestantes = parseInt(ejercicios[idxActual].segundos) || 60;
+      pintarModo();
+      actualizarEjercicio();
+      sonidoInicioEjercicio();
+      mostrarBanner(`🌟 Ejercicio ${idxActual + 1}: ${ejercicios[idxActual].nombre}`, 'ejercicio');
+    }
+
+    function saltarDescanso() {
+      if (modo !== 'descanso') return;
+      segsTransc += segsRestantes;   // contar el tiempo saltado como transcurrido
+      segsRestantes = 0;
+      tick();
+    }
 
     function tick() {
       if (pausado) return;
-      if (segsRestantesEj === 3) sonidoAviso();
 
-      segsRestantesEj--;
-      segsTranscurridos++;
+      if (segsRestantes === 3) sonidoAviso();
+
+      segsRestantes--;
+      segsTransc++;
       actualizarTimer();
 
-      if (segsRestantesEj <= 0) {
+      if (segsRestantes > 0) return;
+
+      // Fin de un bloque
+      if (modo === 'ejercicio') {
         idxActual++;
         if (idxActual >= ejercicios.length) {
-          finSesion();
-        } else {
-          segsRestantesEj = parseInt(ejercicios[idxActual].segundos) || 60;
-          sonidoCambio();
-          mostrarBannerCambio();
-          actualizarEjercicio();
+          finSesion(); return;
         }
+        empezarDescanso();
+      } else {
+        // Fin del descanso → siguiente ejercicio
+        empezarEjercicio();
       }
     }
 
@@ -294,12 +360,14 @@
       sonidoFin();
       marcarSesionCompleta();
 
-      document.getElementById('timer').textContent     = '0:00';
-      document.getElementById('barra').style.cssText  += '; width:100%; transition:none';
-      document.getElementById('media-wrap').textContent = '🎉';
-      document.getElementById('ej-nombre').textContent  = '¡Lo has conseguido!';
-      document.getElementById('ej-desc').textContent    = '¡Eres increíble!';
-      document.getElementById('btn-pausa').style.display = 'none';
+      document.getElementById('timer').textContent       = '0:00';
+      document.getElementById('barra').style.cssText    += '; width:100%; transition:none';
+      document.getElementById('media-wrap').textContent  = '🎉';
+      document.getElementById('ej-nombre').textContent   = '¡Lo has conseguido!';
+      document.getElementById('ej-desc').textContent     = '¡Eres increíble!';
+      document.getElementById('siguiente-card').className = '';
+      document.getElementById('btn-saltar').className     = 'btn-ctrl';
+      document.getElementById('btn-pausa').style.display  = 'none';
       const btnSalir = document.querySelector('.btn-salir');
       btnSalir.textContent = 'Continuar →';
       btnSalir.onclick     = () => window.location.href = 'feedback.html';
@@ -307,17 +375,17 @@
       setTimeout(() => window.location.href = 'feedback.html', 3500);
     }
 
-    // ---- Arrancar (gesto de usuario → AudioContext permitido) ----
+    // ---- Arrancar ----
 
     function arrancar() {
       crearAudioCtx();
       document.getElementById('overlay').style.display = 'none';
       actualizarEjercicio();
       actualizarTimer();
+      pintarModo();
       intervalo = setInterval(tick, 1000);
     }
 
-    // Precalcular timer antes de pulsar
     actualizarTimer();
   </script>
 </body>
