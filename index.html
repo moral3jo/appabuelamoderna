@@ -92,7 +92,7 @@
       btn.textContent = 'Cargando...';
       btn.disabled    = true;
       try {
-        const ejercicios = await getEjerciciosDelDia();
+        const ejercicios = await getEjerciciosPorBloques();
         guardarEjercicios(ejercicios);
         window.location.href = 'preview.html';
       } catch {

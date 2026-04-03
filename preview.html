@@ -8,65 +8,106 @@
   <link rel="manifest" href="manifest.json">
   <link rel="stylesheet" href="style.css">
   <style>
+    /* --- Cabecera de bloque --- */
+    .bloque-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 20px 0 6px;
+      width: 100%;
+    }
+    .bloque-header-linea {
+      flex: 1;
+      height: 1px;
+      background: #ddd;
+    }
+    .bloque-header-texto {
+      font-size: 0.78rem;
+      font-weight: bold;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      padding: 0 4px;
+    }
+
+    /* Colores por tipo de bloque */
+    .tipo-calentamiento { color: #e07a3a; }
+    .tipo-central       { color: var(--verde); }
+    .tipo-cierre        { color: #9c6dc5; }
+    .tipo-estiramiento  { color: #5b8dd9; }
+    .tipo-otro          { color: var(--text-suave); }
+
+    /* --- Fila de ejercicio --- */
     .ej-fila {
       display: flex;
       align-items: center;
       gap: 14px;
-      text-align: left;
-      margin: 10px 0;
       background: white;
       border-radius: var(--radio);
-      padding: 16px 14px;
+      padding: 14px 12px;
       box-shadow: var(--sombra);
+      margin: 6px 0;
+      width: 100%;
     }
-    /* Miniatura: puede ser emoji, img, gif o iframe */
+
+    /* Miniatura */
     .ej-thumb {
-      min-width: 60px;
-      width: 60px;
-      height: 60px;
-      border-radius: 12px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 2.2rem;
-      background: var(--verde-bg);
-      flex-shrink: 0;
+      min-width: 58px; width: 58px; height: 58px;
+      border-radius: 12px; overflow: hidden;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 2.1rem; background: var(--verde-bg); flex-shrink: 0;
     }
     .ej-thumb .media-img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border-radius: 12px;
+      width: 100%; height: 100%; object-fit: cover; border-radius: 12px;
     }
     .ej-thumb iframe {
-      width: 120px;    /* iframe a 2x y escala abajo — YouTube no escala con %, necesita width fijo */
-      height: 120px;
-      transform: scale(0.5);
-      transform-origin: top left;
+      width: 116px; height: 116px;
+      transform: scale(0.5); transform-origin: top left;
       pointer-events: none;
-      border-radius: 0;
     }
+
+    /* Info */
+    .ej-info { flex: 1; min-width: 0; }
     .ej-nombre {
-      font-size: 1.1rem;
-      font-weight: bold;
-      color: var(--text);
-      margin-bottom: 4px;
+      font-size: 1.05rem; font-weight: bold;
+      color: var(--text); margin-bottom: 3px;
+      white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
     }
-    .ej-duracion {
-      font-size: 0.9rem;
+    .ej-duracion { font-size: 0.88rem; color: var(--text-suave); }
+
+    /* Botón cambiar */
+    .btn-swap {
+      flex-shrink: 0;
+      width: 44px; height: 44px;
+      border-radius: 50%;
+      border: 2px solid #ddd;
+      background: white;
+      font-size: 1.3rem;
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: border-color 0.15s, transform 0.2s;
+      user-select: none;
       color: var(--text-suave);
+    }
+    .btn-swap:active {
+      transform: rotate(180deg);
+      border-color: var(--verde);
+      color: var(--verde);
+    }
+    .btn-swap:disabled {
+      opacity: 0.3;
+      cursor: default;
     }
   </style>
 </head>
 <body>
 
   <h1>Tu rutina de hoy 💪</h1>
-  <p style="margin: 10px 0 6px; color: var(--verde); font-size: 1rem;">
-    ⏱ 7 minutos · Sin prisas · Tú puedes
+  <p style="margin: 10px 0 4px; color: var(--verde); font-size: 1rem;">
+    Sin prisas · Tú puedes · Toca ↻ para cambiar un ejercicio
   </p>
 
-  <div id="lista" style="width:100%; margin-top:8px;"></div>
+  <div id="lista" style="width:100%;"></div>
 
   <button class="btn" onclick="window.location.href='workout.html'">¡Empezar! 🌟</button>
   <button class="btn btn-secundario" onclick="window.location.href='index.html'">
@@ -76,40 +117,94 @@
   <script src="config.js"></script>
   <script src="app.js"></script>
   <script>
-    const ejercicios = cargarEjercicios();
-    if (ejercicios.length === 0) window.location.href = 'index.html';
+    // Emoji e icono por tipo de bloque
+    const BLOQUE_META = {
+      calentamiento: { emoji: '🔥', clase: 'tipo-calentamiento', label: 'Calentamiento' },
+      central:       { emoji: '💪', clase: 'tipo-central',       label: 'Ejercicios'    },
+      cierre:        { emoji: '🌿', clase: 'tipo-cierre',        label: 'Cierre'        },
+      estiramiento:  { emoji: '🧘', clase: 'tipo-estiramiento',  label: 'Estiramientos' },
+    };
+
+    function metaBloque(tipo) {
+      const k = (tipo || '').toLowerCase();
+      return BLOQUE_META[k] || { emoji: '•', clase: 'tipo-otro', label: tipo || '' };
+    }
 
     function durStr(seg) {
       seg = parseInt(seg) || 0;
-      const m = Math.floor(seg / 60);
-      const s = seg % 60;
+      const m = Math.floor(seg / 60), s = seg % 60;
       if (m > 0 && s > 0) return `${m} min ${s} seg`;
       if (m > 0)           return `${m} min`;
       return `${s} seg`;
     }
 
-    const lista = document.getElementById('lista');
+    function renderLista(ejercicios) {
+      const lista = document.getElementById('lista');
+      lista.innerHTML = '';
+      let tipoActual  = null;
 
-    ejercicios.forEach((ej, i) => {
-      // Columnas normalizadas: nombre, descripcion, segundos, animacion, emoji, grupo
-      const fila = document.createElement('div');
-      fila.className = 'ej-fila';
+      ejercicios.forEach((ej, i) => {
+        const tipo = ej._tipo || '';
+        const meta = metaBloque(tipo);
 
-      const thumb = document.createElement('div');
-      thumb.className = 'ej-thumb';
-      // animacion puede ser URL, nombre de archivo, data: o vacío → emoji
-      insertarMedia(thumb, ej.animacion, ej.emoji || '🏃', 'media-img');
+        // Cabecera de bloque cuando cambia el tipo
+        if (tipo !== tipoActual) {
+          tipoActual = tipo;
+          const header = document.createElement('div');
+          header.className = 'bloque-header';
+          header.innerHTML = `
+            <div class="bloque-header-linea"></div>
+            <span class="bloque-header-texto ${meta.clase}">${meta.emoji} ${meta.label}</span>
+            <div class="bloque-header-linea"></div>
+          `;
+          lista.appendChild(header);
+        }
 
-      const info = document.createElement('div');
-      info.innerHTML = `
-        <div class="ej-nombre">${i + 1}. ${ej.nombre || ej.id}</div>
-        <div class="ej-duracion">${durStr(ej.segundos)}</div>
-      `;
+        // Fila del ejercicio
+        const fila = document.createElement('div');
+        fila.className = 'ej-fila';
+        fila.id        = `fila-${i}`;
 
-      fila.appendChild(thumb);
-      fila.appendChild(info);
-      lista.appendChild(fila);
-    });
+        // Miniatura
+        const thumb = document.createElement('div');
+        thumb.className = 'ej-thumb';
+        insertarMedia(thumb, ej.animacion, ej.emoji || '🏃', 'media-img');
+
+        // Info
+        const info = document.createElement('div');
+        info.className = 'ej-info';
+        info.innerHTML = `
+          <div class="ej-nombre">${ej.nombre || ''}</div>
+          <div class="ej-duracion">${durStr(ej.segundos)}</div>
+        `;
+
+        // Botón cambiar
+        const pool        = cargarPool();
+        const tipoKey     = (tipo || '').toLowerCase();
+        const disponibles = pool[tipoKey] || [];
+        const puedeSwap   = disponibles.length > 1;
+
+        const btnSwap = document.createElement('button');
+        btnSwap.className = 'btn-swap';
+        btnSwap.title     = puedeSwap ? 'Cambiar este ejercicio' : 'No hay más ejercicios de este tipo';
+        btnSwap.disabled  = !puedeSwap;
+        btnSwap.textContent = '↻';
+        btnSwap.onclick = () => {
+          const actualizados = swapEjercicio(i);
+          renderLista(actualizados);   // volver a pintar toda la lista
+        };
+
+        fila.appendChild(thumb);
+        fila.appendChild(info);
+        fila.appendChild(btnSwap);
+        lista.appendChild(fila);
+      });
+    }
+
+    // --- Arrancar ---
+    let ejercicios = cargarEjercicios();
+    if (ejercicios.length === 0) window.location.href = 'index.html';
+    renderLista(ejercicios);
   </script>
 </body>
 </html>

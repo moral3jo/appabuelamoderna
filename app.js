@@ -29,12 +29,7 @@ async function leerSheet(pestana) {
 
   const res  = await fetch(url);
   const text = await res.text();
-
-  // La respuesta tiene prefijo /*O_o*/ de 47 chars
-  const jsonStr = text.substring(47, text.length - 2);
-  const data    = JSON.parse(jsonStr);
-
-  // Normalizar cabeceras: "Descripción" → "descripcion"
+  const data = JSON.parse(text.substring(47, text.length - 2));
   const cols = data.table.cols.map(c => normalizarClave(c.label));
 
   return data.table.rows.map(row => {
@@ -52,37 +47,83 @@ async function getConsejoDelDia() {
   return consejos[dayOfYear() % consejos.length];
 }
 
+// ---- Selección por bloques ---------------------------------
+
 /**
- * Ejercicios del día (selección determinista: mismo día = misma rutina).
- * Columnas del sheet: id, nombre, descripcion, segundos, animacion, emoji, grupo
+ * Carga todos los ejercicios del Sheet, los agrupa por tipo,
+ * guarda el pool completo para poder hacer swaps en preview,
+ * y devuelve la selección del día organizada por bloques.
+ *
+ * Cada ejercicio lleva _tipo (nombre del bloque al que pertenece).
  */
-async function getEjerciciosDelDia() {
-  let todos = await leerSheet('ejercicios');
+async function getEjerciciosPorBloques() {
+  const todos = await leerSheet('ejercicios');
+  const seed  = dayOfYear();
 
-  // Filtrar por grupo si está configurado
-  if (CONFIG.GRUPO && CONFIG.GRUPO.trim() !== '') {
-    const grupoBuscado = CONFIG.GRUPO.trim().toLowerCase();
-    const filtrados    = todos.filter(e => (e.grupo || '').toLowerCase() === grupoBuscado);
-    if (filtrados.length > 0) todos = filtrados;
-    // Si el filtro no da resultados, usa todos (evita romper la app)
-  }
-
-  const n    = Math.min(CONFIG.EJERCICIOS_POR_SESION, todos.length);
-  const seed = dayOfYear();
+  // Agrupar todos por tipo (clave normalizada)
+  const porTipo = {};
+  todos.forEach(e => {
+    const t = normalizarClave(e.tipo || 'sin_tipo');
+    if (!porTipo[t]) porTipo[t] = [];
+    porTipo[t].push(e);
+  });
+  guardarPool(porTipo);
 
   const seleccionados = [];
-  const usados        = new Set();
-  let i = 0;
 
-  while (seleccionados.length < n) {
-    const idx = (seed * 3 + i * 7) % todos.length;
-    if (!usados.has(idx)) {
-      usados.add(idx);
-      seleccionados.push(todos[idx]);
+  for (const bloque of CONFIG.BLOQUES) {
+    const tipoKey    = normalizarClave(bloque.tipo);
+    const disponibles = porTipo[tipoKey] || [];
+    const n          = Math.min(bloque.cantidad, disponibles.length);
+    const usados     = new Set();
+    let   i          = 0;
+
+    while (usados.size < n && i < disponibles.length * 3) {
+      const idx = (seed * 3 + i * 7) % disponibles.length;
+      if (!usados.has(idx)) {
+        usados.add(idx);
+        seleccionados.push({ ...disponibles[idx], _tipo: bloque.tipo });
+      }
+      i++;
     }
-    i++;
   }
+
   return seleccionados;
+}
+
+/**
+ * Intercambia el ejercicio en la posición `posicion` por otro
+ * del mismo tipo que no esté ya en la selección.
+ * Cicla entre los candidatos disponibles.
+ * Devuelve el array actualizado (y lo guarda en sessionStorage).
+ */
+function swapEjercicio(posicion) {
+  const ejercicios  = cargarEjercicios();
+  const ej          = ejercicios[posicion];
+  const tipoKey     = normalizarClave(ej._tipo || '');
+  const pool        = cargarPool();
+  const disponibles = pool[tipoKey] || [];
+
+  if (disponibles.length <= 1) return ejercicios;
+
+  // IDs del mismo tipo ya en uso (excepto el que vamos a cambiar)
+  const idsEnUso = new Set(
+    ejercicios
+      .filter((e, i) => i !== posicion && normalizarClave(e._tipo || '') === tipoKey)
+      .map(e => e.id)
+  );
+
+  const candidatos = disponibles.filter(e => e.id !== ej.id && !idsEnUso.has(e.id));
+  if (candidatos.length === 0) return ejercicios;
+
+  // Ciclar con contador en sessionStorage para no repetir al pulsar varias veces
+  const clave   = `swap_${posicion}`;
+  const swapIdx = parseInt(sessionStorage.getItem(clave) || '0');
+  sessionStorage.setItem(clave, (swapIdx + 1) % candidatos.length);
+
+  ejercicios[posicion] = { ...candidatos[swapIdx % candidatos.length], _tipo: ej._tipo };
+  guardarEjercicios(ejercicios);
+  return ejercicios;
 }
 
 // ---- Sesión del día ----------------------------------------
@@ -95,34 +136,30 @@ function marcarSesionCompleta() {
   localStorage.setItem('sesion_fecha', new Date().toDateString());
 }
 
-// ---- Transferencia de datos entre páginas ------------------
+// ---- Persistencia entre páginas ----------------------------
 
 function guardarEjercicios(ejercicios) {
   sessionStorage.setItem('ejercicios_hoy', JSON.stringify(ejercicios));
 }
 
 function cargarEjercicios() {
-  try {
-    return JSON.parse(sessionStorage.getItem('ejercicios_hoy') || '[]');
-  } catch {
-    return [];
-  }
+  try { return JSON.parse(sessionStorage.getItem('ejercicios_hoy') || '[]'); }
+  catch { return []; }
+}
+
+function guardarPool(porTipo) {
+  sessionStorage.setItem('ejercicios_pool', JSON.stringify(porTipo));
+}
+
+function cargarPool() {
+  try { return JSON.parse(sessionStorage.getItem('ejercicios_pool') || '{}'); }
+  catch { return {}; }
 }
 
 // ---- Renderizado de imágenes / vídeos / YouTube ------------
 
-/**
- * Devuelve un elemento HTML (img, video o iframe) para mostrar la animación.
- * Acepta:
- *   - URL completa http/https → img o video según extensión
- *   - URL de YouTube          → iframe embed
- *   - data:...                → img (base64)
- *   - nombre de archivo solo  → busca en img/ (ej: "ejercicio.gif" → "img/ejercicio.gif")
- *   - vacío / null            → devuelve null (usa emoji de fallback)
- */
 function crearElementoMedia(src, emoji, cssClass) {
   src = (src || '').trim();
-
   if (!src) return null;
 
   // YouTube
@@ -131,20 +168,20 @@ function crearElementoMedia(src, emoji, cssClass) {
   );
   if (ytMatch) {
     const el = document.createElement('iframe');
-    el.className    = cssClass || 'media-img';
-    el.src          = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
-    el.allow        = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope';
+    el.className       = cssClass || 'media-img';
+    el.src             = `https://www.youtube.com/embed/${ytMatch[1]}?rel=0&modestbranding=1`;
+    el.allow           = 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope';
     el.allowFullscreen = true;
-    el.frameBorder  = '0';
+    el.frameBorder     = '0';
     return el;
   }
 
-  // Si es solo un nombre de archivo (sin / ni http ni data:), buscar en img/
+  // Nombre de archivo solo → buscar en img/
   if (!src.startsWith('http') && !src.startsWith('data:') && !src.includes('/')) {
     src = `img/${src}`;
   }
 
-  // Vídeo local (.webm, .mp4, .ogv, .ogg)
+  // Vídeo local
   if (/\.(webm|mp4|ogv|ogg)(\?.*)?$/i.test(src)) {
     const el = document.createElement('video');
     el.className = cssClass || 'media-img';
@@ -156,13 +193,12 @@ function crearElementoMedia(src, emoji, cssClass) {
     return el;
   }
 
-  // Imagen (png, jpg, gif, webp, svg, data:, etc.)
+  // Imagen
   const el = document.createElement('img');
   el.className = cssClass || 'media-img';
   el.src       = src;
   el.alt       = emoji || '';
   el.onerror   = () => {
-    // Si la imagen falla, muestra el emoji
     const span = document.createElement('span');
     span.className   = el.className;
     span.textContent = emoji || '🏃';
@@ -172,19 +208,9 @@ function crearElementoMedia(src, emoji, cssClass) {
   return el;
 }
 
-/**
- * Inserta el media (o el emoji de fallback) dentro de un contenedor.
- * @param {HTMLElement} contenedor  - donde insertar
- * @param {string}      src         - valor de la columna animacion/imagen
- * @param {string}      emoji       - fallback si no hay imagen
- * @param {string}      cssClass    - clase CSS para el elemento creado
- */
 function insertarMedia(contenedor, src, emoji, cssClass) {
   contenedor.innerHTML = '';
   const el = crearElementoMedia(src, emoji, cssClass);
-  if (el) {
-    contenedor.appendChild(el);
-  } else {
-    contenedor.textContent = emoji || '🏃';
-  }
+  if (el) contenedor.appendChild(el);
+  else    contenedor.textContent = emoji || '🏃';
 }

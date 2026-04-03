@@ -20,18 +20,18 @@ const CONFIG = {
   // 4. Nombre que aparece en el saludo
   NOMBRE: "Mamá",
 
-  // 5. Cuántos ejercicios mostrar por sesión
-  EJERCICIOS_POR_SESION: 4,
+  // 5. Bloques de la sesión
+  //    tipo    → debe coincidir exactamente con la columna "tipo" del Sheet
+  //    cantidad → cuántos ejercicios de ese tipo coger cada día
+  //    Si en el Sheet no hay suficientes de ese tipo, coge los que haya
+  BLOQUES: [
+    { tipo: "calentamiento", cantidad: 1 },
+    { tipo: "central",       cantidad: 2 },
+    { tipo: "cierre",        cantidad: 1 },
+    { tipo: "estiramiento",  cantidad: 1 },
+  ],
 
-  // 6. Duración total en segundos (420 = 7 minutos)
-  //    No incluyas el tiempo de descanso aquí, se calcula automáticamente
-  DURACION_TOTAL: 420,
-
-  // 7. Segundos de descanso entre ejercicios (60 = 1 minuto)
+  // 6. Segundos de descanso entre ejercicios (60 = 1 minuto)
   DESCANSO_SEGUNDOS: 60,
-
-  // 8. Filtro de grupo (deja vacío "" para usar todos los ejercicios del sheet)
-  //    Pon "Suave", "Medio", etc. para usar solo ejercicios de ese grupo
-  GRUPO: "",
 
 };
