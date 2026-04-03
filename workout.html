@@ -259,6 +259,7 @@
 
     function tono(freq, dur, retraso = 0, vol = 0.25) {
       if (!audioCtx) return;
+      if (audioCtx.state === 'suspended') audioCtx.resume();
       const osc = audioCtx.createOscillator();
       const g   = audioCtx.createGain();
       osc.connect(g); g.connect(audioCtx.destination);
@@ -291,8 +292,9 @@
     //  Arranca en posición aleatoria para que nunca suene igual.
     // ================================================================
 
-    let musicaActual  = null;
-    let fadeIntervalo = null;
+    let musicaActual    = null;
+    let fadeInIntervalo = null;
+    let fadeOutIntervalo = null;
 
     // Baraja la lista de canciones con semilla del día y asigna una por ejercicio
     function asignarCanciones() {
@@ -310,20 +312,29 @@
 
     const cancionesPorEjercicio = asignarCanciones();
 
-    function cancelarFade() {
-      if (fadeIntervalo) { clearInterval(fadeIntervalo); fadeIntervalo = null; }
+    function fadeOut(audio, durMs, alTerminar) {
+      if (fadeOutIntervalo) { clearInterval(fadeOutIntervalo); fadeOutIntervalo = null; }
+      const paso  = 50;
+      const delta = audio.volume / (durMs / paso);
+      fadeOutIntervalo = setInterval(() => {
+        audio.volume = Math.max(0, audio.volume - delta);
+        if (audio.volume <= 0) {
+          audio.volume = 0;
+          clearInterval(fadeOutIntervalo); fadeOutIntervalo = null;
+          if (alTerminar) alTerminar();
+        }
+      }, paso);
     }
 
-    function fadeVolumen(audio, destino, durMs, alTerminar) {
-      cancelarFade();
+    function fadeIn(audio, destino, durMs) {
+      if (fadeInIntervalo) { clearInterval(fadeInIntervalo); fadeInIntervalo = null; }
       const paso  = 50;
-      const delta = (destino - audio.volume) / (durMs / paso);
-      fadeIntervalo = setInterval(() => {
-        audio.volume = Math.min(1, Math.max(0, audio.volume + delta));
-        if ((delta > 0 && audio.volume >= destino) || (delta < 0 && audio.volume <= destino)) {
+      const delta = destino / (durMs / paso);
+      fadeInIntervalo = setInterval(() => {
+        audio.volume = Math.min(destino, audio.volume + delta);
+        if (audio.volume >= destino) {
           audio.volume = destino;
-          cancelarFade();
-          if (alTerminar) alTerminar();
+          clearInterval(fadeInIntervalo); fadeInIntervalo = null;
         }
       }, paso);
     }
@@ -334,7 +345,7 @@
       const ruta = 'sound/' + encodeURIComponent(nombre);
 
       const viejo = musicaActual;
-      if (viejo) fadeVolumen(viejo, 0, 1200, () => { viejo.pause(); viejo.src = ''; });
+      if (viejo) fadeOut(viejo, 1200, () => { viejo.pause(); viejo.src = ''; });
 
       const nuevo   = new Audio(ruta);
       nuevo.loop    = true;
@@ -345,7 +356,7 @@
         const margen = Math.min(120, nuevo.duration * 0.1);
         nuevo.currentTime = Math.random() * Math.max(0, nuevo.duration - margen);
         nuevo.play().catch(() => {});
-        fadeVolumen(nuevo, 0.6, 2000);
+        fadeIn(nuevo, 0.6, 2000);
         mostrarIndicadorMusica(nombre);
       }, { once: true });
 
@@ -362,9 +373,9 @@
     }
 
     function detenerMusica() {
-      cancelarFade();
+      if (fadeInIntervalo) { clearInterval(fadeInIntervalo); fadeInIntervalo = null; }
       if (musicaActual) {
-        fadeVolumen(musicaActual, 0, 1000, () => { musicaActual.pause(); musicaActual = null; });
+        fadeOut(musicaActual, 1000, () => { musicaActual.pause(); musicaActual = null; });
       }
     }
 

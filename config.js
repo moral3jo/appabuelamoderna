@@ -48,6 +48,6 @@ const CONFIG = {
 
   // 7. Modo desarrollador: tiempos muy cortos para probar el flujo rápido
   //    false = normal  |  true = ejercicios 10 seg, descansos 2 seg
-  DEV_MODE: true,
+  DEV_MODE: false,
 
 };
