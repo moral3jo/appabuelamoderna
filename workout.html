@@ -402,8 +402,10 @@
     }
 
     function actualizarSiguienteCard() {
-      // Rellena la card del siguiente ejercicio (usada tanto en descanso como en aviso final)
-      const siguiente = ejercicios[idxActual + 1];
+      // Durante el descanso, idxActual ya apunta al próximo ejercicio (fue incrementado en tick)
+      // Durante el ejercicio (aviso final), necesitamos idxActual+1
+      const esDescanso = (modo === 'descanso');
+      const siguiente  = esDescanso ? ejercicios[idxActual] : ejercicios[idxActual + 1];
       if (!siguiente) return;
       document.getElementById('siguiente-nombre').textContent = siguiente.nombre || '';
       insertarMedia(
@@ -423,6 +425,8 @@
     function actualizarDescanso() {
       document.getElementById('ej-desc').textContent   = 'Respira, bebe agua si necesitas.';
       document.getElementById('media-wrap').textContent = '💧';
+      // idxActual ya fue incrementado antes de llamar a empezarDescanso,
+      // así que idxActual apunta ahora al próximo ejercicio
       actualizarSiguienteCard();
     }
 
@@ -467,9 +471,14 @@
 
     function saltarDescanso() {
       if (modo !== 'descanso') return;
+      // Paramos el intervalo para evitar que se ejecute tick() en paralelo
+      // (lo que causaría que empezarEjercicio se llamara dos veces y la música se solapara)
+      clearInterval(intervalo);
       segsTransc   += segsRestantes;
       segsRestantes = 0;
-      tick();
+      actualizarTimer();
+      empezarEjercicio();
+      intervalo = setInterval(tick, 1000);
     }
 
     function tick() {
