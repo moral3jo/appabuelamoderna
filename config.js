@@ -5,6 +5,9 @@
 
 const CONFIG = {
 
+  // Versión de la app — actualizar con cada despliegue
+  APP_VERSION: "1.2.0",
+
   // 1. ID de tu Google Sheet
   //    Coge la parte larga de la URL:
   //    https://docs.google.com/spreadsheets/d/ >>ESTO<< /edit

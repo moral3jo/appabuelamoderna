@@ -9,10 +9,13 @@
   <link rel="stylesheet" href="style.css">
   <style>
     body {
-      justify-content: flex-start;
+      display: flex;
+      flex-direction: column;
       height: 100dvh;
       overflow: hidden;
-      padding: 6px 16px 12px;
+      /* padding-bottom extra para dejar espacio a los controles fijos */
+      padding: 4px 16px 80px;
+      gap: 0;
     }
 
     /* --- Overlay de inicio --- */
@@ -52,7 +55,8 @@
     /* --- Timer --- */
     .timer-wrap { width: 100%; text-align: center; margin: 4px 0 2px; }
     .timer {
-      font-size: 2.6rem; font-weight: bold;
+      font-size: clamp(2rem, 10vh, 2.6rem); /* Fuente fluida según altura */
+      font-weight: bold;
       font-variant-numeric: tabular-nums; line-height: 1;
       transition: color 0.4s;
     }
@@ -78,29 +82,33 @@
       color: white; text-shadow: 0 1px 3px rgba(0,0,0,0.45);
     }
 
-    /* --- Zona de media: crece para llenar espacio disponible --- */
+    /* --- Zona de media: el elemento flexible principal --- */
     #media-wrap {
-      flex: 1; min-height: 0;
+      flex: 1; 
+      min-height: 0; /* CRUCIAL: permite que el bloque se encoja si falta espacio */
       width: 100%;
       display: flex; align-items: center; justify-content: center;
-      margin: 8px 0 4px; border-radius: var(--radio);
+      margin: 4px 0; border-radius: var(--radio);
       overflow: hidden; background: var(--verde-bg);
-      font-size: 8rem; line-height: 1;
+      font-size: clamp(4rem, 20vh, 8rem); line-height: 1;
       transition: background 0.4s;
     }
     #media-wrap.descanso { background: #e8eef8; }
     #media-wrap .media-img {
-      width: 100%; height: 100%;
+      max-width: 100%; max-height: 100%;
       object-fit: contain; border-radius: var(--radio);
     }
-    #media-wrap video.media-img { object-fit: cover; }
+    #media-wrap video.media-img { object-fit: contain; } /* 'contain' mejor para no recortar */
     #media-wrap iframe.media-img { width: 100%; height: 100%; border: none; }
 
     /* --- Descripción del ejercicio --- */
     .ej-desc-grande {
-      font-size: 1.15rem; color: var(--text);
-      text-align: center; line-height: 1.65;
+      font-size: clamp(0.95rem, 4vh, 1.15rem); /* Se encoje en pantallas pequeñas */
+      color: var(--text);
+      text-align: center; line-height: 1.4;
       margin: 0 4px;
+      overflow-y: auto; /* Permite scroll interno si es muy larga */
+      max-height: 4.5em; /* Límite de altura para que no empuje todo */
     }
 
     /* --- Card "a continuación" durante el descanso --- */
@@ -110,22 +118,25 @@
       padding: 14px 16px; box-shadow: var(--sombra);
       margin-top: 10px; text-align: left;
     }
-    #siguiente-card.visible { display: flex; align-items: center; gap: 14px; }
+    #siguiente-card.visible { 
+      display: flex; align-items: center; gap: 12px; 
+      margin-top: 4px; padding: 10px 14px; /* Un poco más compacto */
+    }
     .siguiente-label {
-      font-size: 0.8rem; color: #5b8dd9; font-weight: bold;
-      margin-bottom: 4px; display: block;
+      font-size: 0.72rem; color: #5b8dd9; font-weight: bold;
+      margin-bottom: 2px; display: block;
       text-transform: uppercase; letter-spacing: 0.05em;
     }
     .siguiente-thumb {
-      min-width: 52px; width: 52px; height: 52px;
-      border-radius: 10px; background: #e8eef8;
+      min-width: 44px; width: 44px; height: 44px; /* Un pelín más pequeño */
+      border-radius: 8px; background: #e8eef8;
       display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; overflow: hidden; flex-shrink: 0;
+      font-size: 1.5rem; overflow: hidden; flex-shrink: 0;
     }
     .siguiente-thumb .media-img {
-      width: 100%; height: 100%; object-fit: cover; border-radius: 10px;
+      width: 100%; height: 100%; object-fit: cover; border-radius: 8px;
     }
-    .siguiente-nombre { font-size: 1.05rem; font-weight: bold; color: var(--text); }
+    .siguiente-nombre { font-size: 0.95rem; font-weight: bold; color: var(--text); }
 
     /* --- Indicador de música --- */
     #music-indicator {
@@ -134,10 +145,19 @@
       transition: opacity 0.5s;
     }
 
-    /* --- Controles --- */
-    .controles { display: flex; gap: 12px; width: 100%; margin-top: 8px; }
+    /* --- Controles FIJOS al fondo — siempre visibles --- */
+    .controles {
+      position: fixed;
+      bottom: 0; left: 0; right: 0;
+      display: flex; gap: 10px;
+      padding: 8px 16px 12px;
+      background: var(--crema);
+      /* Sombra sutil hacia arriba para separar del contenido */
+      box-shadow: 0 -2px 12px rgba(0,0,0,0.07);
+      z-index: 20;
+    }
     .btn-ctrl {
-      flex: 1; min-height: 60px; font-size: 1.5rem;
+      flex: 1; min-height: 52px; font-size: 1.3rem;
       border: none; border-radius: var(--radio); cursor: pointer;
       transition: transform 0.1s; user-select: none;
     }

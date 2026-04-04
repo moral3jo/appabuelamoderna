@@ -24,6 +24,16 @@
       text-align: center;
       margin-top: 10px;
     }
+    /* Indicador de versión: pequeño y discreto en la esquina */
+    #app-version {
+      position: fixed;
+      bottom: 6px; right: 10px;
+      font-size: 0.55rem;
+      color: #bbb;
+      font-family: monospace;
+      user-select: none;
+      pointer-events: none;
+    }
   </style>
 </head>
 <body>
@@ -41,6 +51,8 @@
   <button class="btn" id="btn-ejercicios" onclick="irAPreview()">
     Ver mis ejercicios de hoy →
   </button>
+
+  <span id="app-version"></span>
 
   <script src="config.js"></script>
   <script src="app.js"></script>
@@ -92,6 +104,9 @@
     }
 
     init();
+    // Mostrar versión en esquina
+    const vEl = document.getElementById('app-version');
+    if (vEl && CONFIG.APP_VERSION) vEl.textContent = 'v' + CONFIG.APP_VERSION;
   </script>
 </body>
 </html>
